@@ -1,0 +1,72 @@
+---
+weight: 50
+---
+
+# 部署 
+
+本文将向您介绍如何部署计量计费所依赖的组件
+
+## 部署前须知
+
+* **Cost Management Server** 和  **Cost Management Agent** 配合完成平台整体的计量计费功能提供，服务端组件承载了计量计费的相关数据存储能力，客户端组件承载了计量计费的相关计量采集、计费能力。
+  
+* **Cost Management Server** 组件依赖使用 ClickHouse 作为数据存储，您可以部署平台提供的 Log Store with Clickhouse 插件，也可以自行部署 Clickhouse 以对接使用。
+  
+* **Cost Management Agent** 组件依赖对应集群已部署 **Monitor with Prometheus** 监控组件，请提前确保该组件已部署成功。
+
+## 部署 Cost Management Server 插件
+
+### 前提条件
+
+**Cost Management Serve** 组件依赖使用 ClickHouse 作为数据存储，您可以部署平台提供的 Log Store with Clickhouse 插件，也可以自行部署 Clickhouse 以对接使用。
+
+### 操作步骤
+
+1. 登录部署了 Log Store with Clickhouse 插件的集群，获取 Clickhouse 对接信息：
+
+```bash
+# 获取 Clickhouse 对接地址
+kubectl get feature log-center -o jsonpath='{.spec.accessInfo.clickhouse.address}'
+
+# 获取 Clickhouse 用户名密码：
+kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.username}\|base64 -d
+kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.password}\|base64 -d
+```
+
+2. 在左侧导航栏中，单击 **集群管理** > **集群**。
+
+2. 单击 global 集群
+
+3. 在 **插件** 页签下，单击 **计量计费服务端** 插件右侧的> **部署**。
+
+4. 参考以下说明，配置相关参数。
+
+    | 参数 | 说明 |
+    | ---- | ---- |
+    | **Clickhouse 地址** | 配置 Clickhouse 的对接地址|
+    | **Clickhouse 集群名称**| Clickhouse 的集群名称，平台自建的 Clickhouse 默认填 replicated。|
+    | **Clickhouse Secret名称**| 配置 Clickhouse 对接用户名密码的 Secret|
+    | **CPU 单价**| 设置 CPU 计费单价，平台会按有效使用量（core-hours）进行计量计费，有效使用量即一小时内 Request 和 Usage 的较大值。|
+    | **内存单价**| 设置内存计费单价，平台会按有效使用量（core-hours）进行计量计费，有效使用量即一小时内 Request 和 Usage 的较大值。|
+    | **存储单价**| 设置存储计费单价，平台会按请求量（GiB-hours）进行计量计费，请求量即 PV 请求的存储空间大小。|
+    | **货币单位**| 选择展示费用时使用的货币单位。|
+
+5. 单击 **部署**。
+
+
+## 部署 Cost Management Agent 插件
+
+
+### 前提条件
+
+* **Cost Management Agent** 组件依赖对应集群已部署 **Monitor with Prometheus** 监控组件，请提前确保该组件已部署成功。
+
+### 操作步骤
+
+1. 在左侧导航栏中，单击 **集群管理** > **集群**。
+
+2. 单击待部署计量计费客户端的 ***集群名称***。
+
+3. 在 **插件** 页签下，单击 **计量计费客户端** 插件右侧的> **部署**。
+
+4. 单击 **部署**。
