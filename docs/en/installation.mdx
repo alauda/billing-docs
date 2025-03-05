@@ -1,0 +1,69 @@
+---
+weight: 50
+sourceSHA: a5eb828cb2c78fa71828524f15c995074069156dab594f768fb09206779dc686
+---
+
+# Deployment
+
+This article will introduce how to deploy the components required for metering and billing.
+
+## Predeployment Considerations
+
+- The **Cost Management Server** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
+
+- The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either deploy the Log Store with Clickhouse plugin provided by the platform or deploy ClickHouse on your own for integration.
+
+- The **Cost Management Agent** component requires that the corresponding cluster has the **Monitor with Prometheus** monitoring component deployed. Please ensure that this component is successfully deployed in advance.
+
+## Deploying the Cost Management Server Plugin
+
+### Prerequisites
+
+The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either deploy the Log Store with Clickhouse plugin provided by the platform or deploy ClickHouse on your own for integration.
+
+### Steps
+
+1. Log in to the cluster where the Log Store with Clickhouse plugin is deployed and obtain ClickHouse integration information:
+
+```bash
+# Obtain Clickhouse connection address
+kubectl get feature log-center -o jsonpath='{.spec.accessInfo.clickhouse.address}'
+
+# Obtain Clickhouse username and password:
+kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.username}\|base64 -d
+kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.password}\|base64 -d
+```
+
+2. In the left navigation bar, click **App Store** > **Plugin Management**.
+
+3. Select the global cluster.
+
+4. Find the Cost Management Server plugin and click the Deploy button in the right actions bar.
+
+5. Refer to the following description to configure the relevant parameters.
+
+   | Parameter                  | Description                                                               |
+   | -------------------------- | ----------------------------------------------------------------------- |
+   | **Clickhouse Address**     | Configure the Clickhouse connection address                               |
+   | **Clickhouse Cluster Name**| The cluster name for Clickhouse; the default for platform-created Clickhouse is `replicated.` |
+   | **Clickhouse Secret Name** | Configure the Secret for Clickhouse username and password               |
+   | **CPU Unit Price**         | Set the CPU billing unit price; the platform will bill based on effective usage (core-hours), which is the maximum value between Request and Usage within one hour. |
+   | **Memory Unit Price**      | Set the memory billing unit price; the platform will bill based on effective usage (core-hours), which is the maximum value between Request and Usage within one hour. |
+   | **Storage Unit Price**     | Set the storage billing unit price; the platform will bill based on request volume (GiB-hours), which is the size of the storage space requested by PV. |
+   | **Currency Unit**          | Choose the currency unit to display expenses.                            |
+
+6. Click **Deploy**.
+
+## Deploying the Cost Management Agent Plugin
+
+### Prerequisites
+
+- The **Cost Management Agent** component requires that the corresponding cluster has the **Monitor with Prometheus** monitoring component deployed. Please ensure that this component is successfully deployed in advance.
+
+### Steps
+
+1. In the left navigation bar, click **App Store** > **Plugin Management**.
+
+2. Select the cluster where this plugin needs to be installed.
+
+3. Find the Cost Management Agent plugin and click the Deploy button in the right actions bar.
