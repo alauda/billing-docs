@@ -1,0 +1,24 @@
+---
+weight: 40
+sourceSHA: b0559ecb754ad3e900c65277435c620b2f1485c357bd8876317f56bfa2615841
+---
+
+# Core Concepts
+
+## Opencost
+
+**OpenCost** is an open-source Kubernetes cost monitoring and management tool designed to track and analyze resource usage and costs in Kubernetes clusters in real time. It provides accurate resource metering data to help users optimize resource allocation and control costs.
+
+For more information, please refer to the [OpenCost official website](https://www.opencost.io/docs/).
+
+## Billing Method Description
+
+| Billing Item | Billing Method           | Billing Rules                                                                                                             | Description                                                 |
+|--------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| **CPU**      | Effective Usage (Core-hours)| Calculated on an hourly basis using the higher value of the POD's AVG(Usage) and Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). |                                                            |
+| **Memory**   | Effective Usage (GiB-hours)| Calculated on an hourly basis using the higher value of the POD's AVG(Usage) and Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). |                                                            |
+| **Storage**  | Request Volume (GiB-hours) | Calculated on an hourly basis using the Request size of the PV over the past hour, multiplied by the actual duration of the PV (counted as 5 minutes if less than 5 minutes). If a PV is simultaneously mounted to multiple PODs, the usage of the PV will be evenly distributed among each POD. | PVs that are not mounted to any POD will be counted as unmounted records, with the object name being `*unmounted-pvcs`. |
+
+Current statistical issues will be addressed in future versions:
+
+- When a StatefulSet POD is stopped and restarted, the platform will use the earliest running time of the POD on that day as the start time and the latest running time as the end time, while ignoring the time in between when the POD was not running.

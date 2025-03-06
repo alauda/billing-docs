@@ -33,11 +33,11 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.user
 kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.password}\|base64 -d
 ```
 
-2. 在左侧导航栏中，单击 **集群管理** > **集群**。
+2. 在左侧导航栏中，单击 **应用商店** > **插件管理**。
 
-2. 单击 global 集群
+2. 选择 global 集群
 
-3. 在 **插件** 页签下，单击 **计量计费服务端** 插件右侧的> **部署**。
+3. 找到 Cost Management Server 插件，单击右侧操作栏中的部署按钮。
 
 4. 参考以下说明，配置相关参数。
 
@@ -63,10 +63,8 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
 
 ### 操作步骤
 
-1. 在左侧导航栏中，单击 **集群管理** > **集群**。
+2. 在左侧导航栏中，单击 **应用商店** > **插件管理**。
 
-2. 单击待部署计量计费客户端的 ***集群名称***。
+2. 选择 需要安装本插件的集群
 
-3. 在 **插件** 页签下，单击 **计量计费客户端** 插件右侧的> **部署**。
-
-4. 单击 **部署**。
+3. 找到 Cost Management Agent 插件，单击右侧操作栏中的部署按钮。

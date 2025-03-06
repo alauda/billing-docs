@@ -1,0 +1,37 @@
+---
+weight: 10
+sourceSHA: 6f90a37045dd3402b2a4c4117632d9d1dfba25c24a6b497c1971c93254de602f
+---
+
+# Introduction
+
+In the rapidly evolving era of cloud computing, enterprises require a flexible and precise billing model to manage and optimize their cloud resource expenditures. The platform offers a billing product specifically designed for cloud-native scenarios, assisting you in achieving detailed resource management and cost control.
+
+The platform provides generalized metering and billing capabilities, along with basic billing methods, supporting the measurement and billing of CPU, memory, and storage resources within clusters, as well as offering statistics and detailed viewing capabilities.
+
+- Cost Statistics: Supports platform administrators in summarizing the costs for each tenant.
+- Cost Details: Allows platform administrators to query the cost details for each tenant for reconciliation purposes.
+
+## Advantages
+
+- **Refined Resource Management**: Accurately measures the usage of CPU, memory, and storage resources, helping users gain deeper insights into resource consumption.
+- **Cost Control**: With detailed metering data and billing information, users can better control and optimize resource costs.
+- **Flexible Billing Methods**: Supports a variety of basic billing methods to cater to different user needs.
+- **Transparency**: Provides resource usage statistics and detailed viewing functions, enhancing the transparency of resource usage.
+- **Integration with OpenCost**: Based on OpenCost, ensuring the accuracy and reliability of metering data.
+
+## Application Scenarios
+
+- **Enterprise Resource Management**: Assists enterprises in accurately measuring and allocating IT resource costs, optimizing resource distribution.
+- **Cloud-native Applications**: Suitable for microservices architectures in cloud-native environments, accurately measuring the resource consumption of each service.
+- **Multi-tenant Environments**: In multi-tenant environments, it provides independent resource metering and billing for each tenant, ensuring fairness and transparency.
+- **Cost Optimization**: Through detailed resource usage data, identifies and optimizes high-cost resources to reduce overall operating costs.
+
+## Usage Limitations
+
+- **Dependency on Prometheus**: Metering data is obtained based on Prometheus; please ensure that the clusters requiring metering have deployed the Monitor with Prometheus plugin before installation.
+- **Resource Type Limitations**: Currently, only CPU, memory, and storage resource metering and billing are supported; other resource types are not supported at this time.
+- **Cluster Compatibility**: Features may not be compatible with all types of Kubernetes clusters and should be used in supported cluster environments.
+- **Data Latency**: Due to the latency of the data collection link, there may be some delay in the measurement data.
+
+Based on this functionality, we hope to help users better manage and optimize their container platform's resource usage, achieving more efficient cost control.
