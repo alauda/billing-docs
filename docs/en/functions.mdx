@@ -1,0 +1,44 @@
+---
+weight: 55
+sourceSHA: 016a9589e9aba4de3aad49dec5493685de5d443e950549d7547e2beb8dbd550b
+---
+
+# Metering and Billing
+
+:::warning
+Metering and billing is only an `Alpha` feature. You need to enable this feature by turning on the feature gate : `ait-billing`.
+:::
+
+## Cost Statistics
+
+The cost statistics feature supports analyzing resource costs on the platform across various dimensions. The supported dimensions are as follows:
+
+- Time Granularity: Supports cost statistics based on project, cluster, or namespace.
+- Reporting Interval: Supports cost statistics on a monthly, weekly, or daily basis.
+- Distinguish Billing Items: You can specify whether to display the costs of each billing item separately, such as CPU, memory, or storage.
+
+1. In the left navigation bar, click **Metering and Billing** > **Cost Statistics**.
+
+2. After selecting the time granularity, reporting interval, whether to distinguish billing items, and defining the time range, configure the name filter, and click the **Search** button to view the corresponding statistical data.
+
+   **Note**:
+
+   - The platform only supports data queries within a maximum period of one year.
+
+   - The currency unit used in the cost metric is determined by the configuration of the **Cost Management Server** plugin.
+
+## Cost Details
+
+The cost details feature allows you to query billing detail data within a custom time range (maximum span of 1 year), with a minimum granularity of **day**.
+
+1. In the left navigation bar, click **Metering and Billing** > **Cost Details**.
+
+2. After selecting the project, cluster, and namespace, click the **Search** button to view the corresponding cost details.
+
+   **Note**:
+
+   - The platform only supports data queries within a maximum period of one year.
+
+   - The currency unit used in the cost metric is determined by the configuration of the **Cost Management Server** plugin.
+
+   - Unmounted PVs that are not attached to a pod will be counted as unmounted records, using the object name `*unmounted-pvcs`.

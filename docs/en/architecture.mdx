@@ -1,0 +1,26 @@
+---
+weight: 15
+sourceSHA: 65711656e6ba29eeb185fcffd2f18cf12055a3459fd48453eb855133ba7d768d
+---
+
+# Architecture
+
+![](../zh/assets/billing_flow.png)
+
+The platform provides overall metering and billing capabilities through the cooperation of **CostManagement Server** and **CostManagement Agent** components:
+
+- **CostManagement Server**: You need to deploy this plugin in the global cluster in order to use the platform's metering and billing functions.
+
+  - Interfaces with Clickhouse, responsible for receiving data reported by clients and storing it in the Clickhouse database, with no time limit on data storage.
+
+  - Provides an API for querying metering and billing data.
+
+  - Offers the ability to modify unit prices and currency unit configurations.
+
+  - **Note**: The currency unit set by the platform currently only affects display purposes and does not support currency conversion between different units.
+
+- **CostManagement Agent**: You need to deploy this plugin in the cluster where metering and billing are planned, so that the platform can meter and bill the resources in the cluster.
+
+  - Interfaces with Prometheus, providing an exporter to store metering and billing metrics data in Prometheus.
+
+  - Connects to **CostManagement Server**, aggregates and calculates the metering and billing data for all resources in the cluster from the previous day at 12:30 AM each day, and reports it to the server. If the report fails, it will attempt to resend every two hours until successful.
