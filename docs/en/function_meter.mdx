@@ -1,0 +1,78 @@
+---
+weight: 56
+sourceSHA: 1b9445d4288a0d2f3d00d8197e8bc67fa7eae9ec1f24fb5ec3d1f7d15d10e795
+---
+
+# Operation Statistics
+
+:::warning
+Operation statistics is a measurement feature provided by the platform, which will be replaced by new metering and billing functionality in the future. Please use this feature cautiously.
+:::
+
+## Operation Overview
+
+The operation overview of the platform presents a visual report showcasing the total usage of CPU/memory within the specified time range on the platform, along with usage statistics for the top 5 projects or namespaces.
+
+It supports viewing project quotas for the current month (default), the last month, and the last 3 months (current month and the previous two complete months), and provides usage statistics for container groups, container group quotas, namespace quotas, and total CPU/memory usage.
+
+Steps to operate:
+
+1. In the left navigation bar, click **Operation Statistics** > **Operation Overview**.
+
+   You can switch the statistical time range, statistical items, and statistical granularity as illustrated, and view the corresponding operation overview data.
+
+   **Note**: Container group usage is calculated based on the actual usage of Pods, while container group quotas are based on the request values (request) of Pods.
+
+## Statistical Report
+
+Operation statistics data can be retained on the platform for a maximum of 540 days, after which the platform will automatically delete statistics that exceed the retention period. It supports viewing visual report data for statistical items within a custom time range (maximum time range is 6 months). Filtering can be done based on statistical granularity (project, namespace) and project (all, custom projects).
+
+Statistical items include: container group usage, container group quotas, project quotas, and namespace quotas. Additionally, clicking **Export Results** allows you to export the filtered statistical data as a CSV format report.
+
+**Note**: Detailed data can only be viewed when the **Statistical Item** is `Container Group Quota` or `Container Group Usage`.
+
+Steps to operate:
+
+1. In the left navigation bar, click **Operation Statistics** > **Statistical Report**.
+
+2. Follow the instructions in the illustration below to select the statistical time range, statistical items, and statistical granularity, then set the project filtering conditions and click the **Search** button to view the corresponding statistical report data.
+
+   **Note**:
+
+   - The platform retains data only within the past 540 days, and the maximum time range supported for a single query is 6 months.
+
+   - Container group usage: Calculated based on the actual usage of Pods, summing the average usage calculated every 5 minutes.
+
+   - Container group quotas: Calculated based on the request values (request) of Pods.
+
+   - Namespace quotas: Calculated based on the CPU and memory quotas of the namespace, with statistics taken once daily, beginning the day after quota changes.
+
+   - Project quotas: Calculated based on the CPU and memory quotas of the project, calculated once daily, beginning the day after quota changes.
+
+   - Detailed data can be viewed when the **Statistical Item** is `Container Group Quota` or `Container Group Usage`.
+
+   - Sorting is available based on **Namespace Name** (first letter), **Belonging Project** (first letter), **Total CPU Usage** (size), and **Total Memory Usage** (size).
+
+## Metering Details
+
+The platform retains usage detail data for nearly 18 months and supports querying visual report detail data within a custom time range (within the last 31 days) for statistical items.
+
+Filtering can be conducted based on statistical items (container group usage, container group quotas), project name, project associated cluster, and namespaces under the cluster. Additionally, clicking **Export Results** allows you to export the filtered statistical data as a CSV format report.
+
+Steps to operate:
+
+1. In the left navigation bar, click **Operation Statistics** > **Metering Details**.
+
+   **Or**: On the **Statistical Report** page, when the **Statistical Item** is `Container Group Quota` or `Container Group Usage`, click the **Details** button on the right side of a single query result record to enter the metering details page and view the detailed data.
+
+2. Follow the instructions in the illustration below to select the statistical time range, statistical items, project, cluster, and namespace, then click the **Search** button to view the corresponding usage detail data.
+
+   **Note**:
+
+   - The platform retains data only within the past 18 months, and the maximum time range supported for a single query is 31 days.
+
+   - Container group usage: Calculated based on the actual usage of Pods, summing the average usage calculated every 5 minutes.
+
+   - Container group quotas: Calculated based on the request values (request) of Pods.
+
+   - Sorting is available based on **Container Group Name** (first letter), **Total CPU Usage** (size), and **Total Memory Usage** (size).
