@@ -11,19 +11,19 @@ This article will introduce how to install the components required for metering 
 
 - The **Cost Management Server** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
 
-- The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the Log Store with Clickhouse plugin provided by the platform or deploy ClickHouse on your own for integration.
+- The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
 
-- The **Cost Management Agent** component requires that the corresponding cluster has the **Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully deployed in advance.
+- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
 
 ## Install the Cost Management Server Plugin
 
 ### Prerequisites
 
-The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the Log Store with Clickhouse plugin provided by the platform or deploy ClickHouse on your own for integration.
+The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
 
 ### Steps
 
-1. Log in to the cluster where the Log Store with Clickhouse plugin is installed and obtain ClickHouse integration information:
+1. Log in to the cluster where the ACP Log Storage with Clickhouse plugin is installed and obtain ClickHouse integration information:
 
 ```bash
 # Obtain Clickhouse connection address
@@ -36,9 +36,9 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
 
 2. In the left navigation bar, click **App Store** > **Plugin Management**.
 
-3. Select the global cluster.
+3. Select the `global` cluster.
 
-4. Find the Cost Management Server plugin and click the Deploy button in the right actions bar.
+4. Find the Cost Management Server plugin and click the Install button in the right actions bar.
 
 5. Refer to the following description to configure the relevant parameters.
 
@@ -52,13 +52,13 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
    | **Storage Unit Price**     | Set the storage billing unit price; the platform will bill based on request volume (GiB-hours), which is the size of the storage space requested by PV. |
    | **Currency Unit**          | Choose the currency unit to display expenses.                            |
 
-6. Click **Deploy**.
+6. Click **Install**.
 
 ## Install the Cost Management Agent Plugin
 
 ### Prerequisites
 
-- The **Cost Management Agent** component requires that the corresponding cluster has the **Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully deployed in advance.
+- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
 
 ### Steps
 
@@ -66,4 +66,4 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
 
 2. Select the cluster where this plugin needs to be installed.
 
-3. Find the Cost Management Agent plugin and click the Deploy button in the right actions bar.
+3. Find the Cost Management Agent plugin and click the Install button in the right actions bar.
