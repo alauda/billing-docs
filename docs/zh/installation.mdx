@@ -2,27 +2,27 @@
 weight: 50
 ---
 
-# 部署 
+# 安装 
 
-本文将向您介绍如何部署计量计费所依赖的组件
+本文将向您介绍如何安装计量计费所依赖的组件
 
-## 部署前须知
+## 安装前须知
 
 * **Cost Management Server** 和  **Cost Management Agent** 配合完成平台整体的计量计费功能提供，服务端组件承载了计量计费的相关数据存储能力，客户端组件承载了计量计费的相关计量采集、计费能力。
   
-* **Cost Management Server** 组件依赖使用 ClickHouse 作为数据存储，您可以部署平台提供的 Log Store with Clickhouse 插件，也可以自行部署 Clickhouse 以对接使用。
+* **Cost Management Server** 组件依赖使用 ClickHouse 作为数据存储，您可以安装平台提供的 ACP Log Storage with Clickhouse 插件，也可以自行安装 Clickhouse 以对接使用。
   
-* **Cost Management Agent** 组件依赖对应集群已部署 **Monitor with Prometheus** 监控组件，请提前确保该组件已部署成功。
+* **Cost Management Agent** 组件依赖对应集群已安装 **ACP Monitor with Prometheus** 监控组件，请提前确保该组件已安装成功。
 
-## 部署 Cost Management Server 插件
+## 安装 Cost Management Server 插件
 
 ### 前提条件
 
-**Cost Management Serve** 组件依赖使用 ClickHouse 作为数据存储，您可以部署平台提供的 Log Store with Clickhouse 插件，也可以自行部署 Clickhouse 以对接使用。
+**Cost Management Serve** 组件依赖使用 ClickHouse 作为数据存储，您可以安装平台提供的 ACP Log Storage with Clickhouse 插件，也可以自行安装 Clickhouse 以对接使用。
 
 ### 操作步骤
 
-1. 登录部署了 Log Store with Clickhouse 插件的集群，获取 Clickhouse 对接信息：
+1. 登录安装了 ACP Log Storage with Clickhouse 插件的集群，获取 Clickhouse 对接信息：
 
 ```bash
 # 获取 Clickhouse 对接地址
@@ -37,7 +37,7 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
 
 2. 选择 global 集群
 
-3. 找到 Cost Management Server 插件，单击右侧操作栏中的部署按钮。
+3. 找到 Cost Management Server 插件，单击右侧操作栏中的安装按钮。
 
 4. 参考以下说明，配置相关参数。
 
@@ -51,15 +51,15 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
     | **存储单价**| 设置存储计费单价，平台会按请求量（GiB-hours）进行计量计费，请求量即 PV 请求的存储空间大小。|
     | **货币单位**| 选择展示费用时使用的货币单位。|
 
-5. 单击 **部署**。
+5. 单击 **安装**。
 
 
-## 部署 Cost Management Agent 插件
+## 安装 Cost Management Agent 插件
 
 
 ### 前提条件
 
-* **Cost Management Agent** 组件依赖对应集群已部署 **Monitor with Prometheus** 监控组件，请提前确保该组件已部署成功。
+* **Cost Management Agent** 组件依赖对应集群已安装 **ACP Monitor with Prometheus** 监控组件，请提前确保该组件已安装成功。
 
 ### 操作步骤
 
@@ -67,4 +67,4 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
 
 2. 选择 需要安装本插件的集群
 
-3. 找到 Cost Management Agent 插件，单击右侧操作栏中的部署按钮。
+3. 找到 Cost Management Agent 插件，单击右侧操作栏中的安装按钮。
