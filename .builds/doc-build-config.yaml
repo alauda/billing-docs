@@ -1,4 +1,4 @@
 project: ait
 namespace: ait-dev
-integration: gitlab-ce
-integration_class: gitlab
+integration: github
+integration_class: github
