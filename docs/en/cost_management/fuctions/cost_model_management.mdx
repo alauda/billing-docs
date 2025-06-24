@@ -1,0 +1,172 @@
+---
+weight: 57
+---
+
+# Cost Model Management
+
+:::info
+Cost models help you define the resources and unit prices that need to be billed in clusters. The platform will measure and bill for each cluster based on the cost model.
+:::
+
+## Overview
+
+Cost model management allows platform administrators to define and manage billing models for different clusters. Only clusters associated with a cost model will generate billing data.
+
+**Day 1 Deployment:**
+- After platform deployment and metering/billing service installation, no cost models exist initially
+- No billing will occur until cost models are created and associated with clusters
+- Administrators need to create cost models and bind them to clusters
+- Billing data will be available starting from the next hour
+
+**Day 2 Operations:**
+- Description changes take effect immediately
+- Other modifications (pricing, cluster bindings, billing items) take effect in the next billing cycle
+- Changes do not affect previously generated billing records
+
+## Permissions
+
+| Function | Permission | Notes |
+|----------|------------|-------|
+| Cost Models | Platform administrators can view and configure<br/>Platform auditors can view<br/>Other roles have no permissions | |
+
+## Cost Model List
+
+The cost model list displays all cost models in the platform and supports basic management operations.
+
+### Accessing the Cost Model List
+
+1. In the left navigation bar, click **Metering and Billing** > **Cost Models**.
+
+2. The cost model list page displays the following information:
+   - **Name**: Click to view cost model details
+   - **Description**: Brief description of the cost model
+   - **Associated Clusters**: Clusters bound to this cost model (displayed as labels)
+   - **Creator**: User who created the cost model
+   - **Created Time**: When the cost model was created
+
+3. Available operations:
+   - **Create Cost Model**: Click to open the create cost model dialog
+   - **Search**: Search cost models by name
+   - **Delete**: Delete cost models (disabled for models with associated clusters)
+
+### Creating a Cost Model
+
+1. On the cost model list page, click **Create Cost Model**.
+
+2. Fill in the basic information:
+   - **Name**: Required field with appropriate naming restrictions
+   - **Description**: Optional text description
+
+3. Configure associated clusters:
+   - Select from all available clusters in the platform
+   - Clusters already associated with other cost models cannot be selected
+   - Clusters without metering/billing client components cannot be selected
+   - Option to select all clusters is available
+
+4. Configure the price list:
+   - Click **Add** to open the add price dialog
+   - Configure billing items, billing methods, and unit prices
+   - Support for label-based differentiated pricing
+
+5. Click **Create** to save the cost model.
+
+## Price Configuration
+
+### Adding Prices
+
+In the add price dialog, configure the following:
+
+**Billing Item**: Select from available options (CPU, Memory, Storage)
+
+**Billing Method**: Select based on the chosen billing item:
+- **CPU Options**:
+  - Usage (core-hours): Based on actual CPU consumption
+  - Request (core-hours): Based on CPU resource requests  
+  - Effective Usage (core-hours): Higher of usage or request
+  - Project Quota (core-hours): Based on project-level CPU quotas
+
+- **Memory Options**:
+  - Usage (Gi-hours): Based on actual memory consumption
+  - Request (Gi-hours): Based on memory resource requests
+  - Effective Usage (Gi-hours): Higher of usage or request  
+  - Project Quota (Gi-hours): Based on project-level memory quotas
+
+- **Storage Options**:
+  - Request Volume (Gi-hours): Based on PV request size
+
+**Default Unit Price**: Base price for the billing item (required, minimum 0, up to 2 decimal places)
+
+**Price by Label**: Optional feature for differentiated pricing based on labels
+- **Label Key**: Maximum 63 characters
+- **Label Value Groups**: Define different prices for different label values
+- **Unit Price**: Price for specific label values
+- **Comment**: Optional notes for the price group
+
+When enabled, the platform matches billing records against configured labels and uses the corresponding unit price. If no match is found, the default unit price is used.
+
+### Modifying Prices
+
+1. In the cost model details page, click **Modify** for the price item you want to change.
+
+2. The modify price dialog appears with the same fields as the add dialog, except:
+   - Billing Item and Billing Method are fixed and cannot be modified
+   - All other fields can be updated
+
+3. Click **Add** to save changes.
+
+## Cost Model Details
+
+The cost model details page provides comprehensive information about a specific cost model.
+
+### Viewing Cost Model Details
+
+1. From the cost model list, click on a cost model name to view its details.
+
+2. The details page displays:
+
+**Basic Information**:
+- **Description**: With inline editing capability
+- **Associated Clusters**: Displayed as labels with inline editing capability  
+- **Creator**: User who created the cost model
+- **Created Time**: When the cost model was created
+
+**Price List**:
+- Complete list of configured billing items and methods
+- **Add Price**: Button to add new price configurations
+- **Modify/Delete**: Actions available for each price item
+
+### Editing Cost Model Details
+
+**Description**: Click the edit button to modify the description inline. Changes take effect immediately.
+
+**Associated Clusters**: Click the edit button to modify cluster associations. The same validation rules apply as during creation:
+- Cannot select clusters already associated with other cost models
+- Cannot select clusters without metering/billing client components
+
+**Price List**: 
+- Add new price configurations using the **Add Price** button
+- Modify existing prices using the **Modify** button for each item
+- Delete price items using the **Delete** button (requires confirmation)
+
+## Best Practices
+
+1. **Planning**: Plan your billing strategy before creating cost models
+2. **Naming**: Use descriptive names for cost models to facilitate management
+3. **Testing**: Test cost models with a small set of clusters before full deployment
+4. **Monitoring**: Regularly review billing data to ensure cost models are working as expected
+5. **Documentation**: Maintain clear descriptions for each cost model
+
+## Troubleshooting
+
+**No billing data after creating cost model:**
+- Verify the cost model is associated with the correct clusters
+- Ensure clusters have the metering/billing client component installed
+- Wait until the next hour for billing data to appear
+
+**Clusters not available for selection:**
+- Check if clusters are already associated with other cost models
+- Verify metering/billing client components are installed on the clusters
+
+**Billing data inconsistencies:**
+- Review cost model configuration for accuracy
+- Check if recent changes are still within the implementation delay period 
