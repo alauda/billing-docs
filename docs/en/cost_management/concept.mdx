@@ -3,7 +3,7 @@ weight: 20
 sourceSHA: b0559ecb754ad3e900c65277435c620b2f1485c357bd8876317f56bfa2615841
 ---
 
-# Core Concepts
+# Concepts
 
 ## Opencost
 
@@ -37,13 +37,6 @@ Cost models help you define the resources and unit prices that need to be billed
 | **Memory**   | Project Quota (GiB-hours) | Calculated on an hourly basis using the project's allocated memory quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
 | **Storage**  | Request Volume (GiB-hours) | Calculated on an hourly basis using the Request size of the PV over the past hour, multiplied by the actual duration of the PV (counted as 5 minutes if less than 5 minutes). If a PV is simultaneously mounted to multiple PODs, the usage of the PV will be evenly distributed among each POD. | PVs that are not mounted to any POD will be counted as unmounted records, with the object name being `*unmounted-pvcs`. |
 
-## Project Quota Billing
-
-For project quota billing:
-- **Billing Object**: Project + Cluster combination
-- **Namespace Field**: Empty in billing details
-- **Object Name**: Project name
-- **Segmented Calculation**: When quotas change, billing is calculated in segments using the quota change time as the split point
 
 Current statistical issues will be addressed in future versions:
 

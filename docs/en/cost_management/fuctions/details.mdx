@@ -1,0 +1,20 @@
+---
+weight: 20
+sourceSHA: 016a9589e9aba4de3aad49dec5493685de5d443e950549d7547e2beb8dbd550b
+---
+
+# Cost Details
+
+The cost details feature allows you to query billing detail data within a custom time range (maximum span of 1 year), with a minimum granularity of **day**.
+
+1. In the left navigation bar, click **Metering and Billing** > **Cost Details**.
+
+2. After selecting the project, cluster, and namespace, click the **Search** button to view the corresponding cost details.
+
+   **Note**:
+
+   - The platform only supports data queries within a maximum period of one year.
+   - Only clusters with associated cost models will show billing data. To configure cost models, read [Cost Model Management](./cost_model_management.mdx).
+   - Unmounted PVs that are not attached to a pod will be counted as unmounted records, using the object name `*unmounted-pvcs`.
+   - Supports search by name, column customization, and data export functionality.
+

@@ -1,5 +1,5 @@
 ---
-weight: 57
+weight: 30
 ---
 
 # Cost Model Management
@@ -22,12 +22,6 @@ Cost model management allows platform administrators to define and manage billin
 - Description changes take effect immediately
 - Other modifications (pricing, cluster bindings, billing items) take effect in the next billing cycle
 - Changes do not affect previously generated billing records
-
-## Permissions
-
-| Function | Permission | Notes |
-|----------|------------|-------|
-| Cost Models | Platform administrators can view and configure<br/>Platform auditors can view<br/>Other roles have no permissions | |
 
 ## Cost Model List
 
@@ -65,7 +59,7 @@ The cost model list displays all cost models in the platform and supports basic 
 
 4. Configure the price list:
    - Click **Add** to open the add price dialog
-   - Configure billing items, billing methods, and unit prices
+   - Configure billing items, billing methods, and prices
    - Support for label-based differentiated pricing
 
 5. Click **Create** to save the cost model.
@@ -94,25 +88,25 @@ In the add price dialog, configure the following:
 - **Storage Options**:
   - Request Volume (Gi-hours): Based on PV request size
 
-**Default Unit Price**: Base price for the billing item (required, minimum 0, up to 2 decimal places)
+**Default Price**: Base price for the billing item (required, minimum 0, up to 2 decimal places)
 
-**Price by Label**: Optional feature for differentiated pricing based on labels
+**Price by Label**: Optional feature for dynamic pricing based on labels
 - **Label Key**: Maximum 63 characters
 - **Label Value Groups**: Define different prices for different label values
-- **Unit Price**: Price for specific label values
+- **Price**: Price for specific label values
 - **Comment**: Optional notes for the price group
 
 When enabled, the platform matches billing records against configured labels and uses the corresponding unit price. If no match is found, the default unit price is used.
 
 ### Modifying Prices
 
-1. In the cost model details page, click **Modify** for the price item you want to change.
+1. In the cost model details page, click **Edit** for the price item you want to change.
 
 2. The modify price dialog appears with the same fields as the add dialog, except:
    - Billing Item and Billing Method are fixed and cannot be modified
    - All other fields can be updated
 
-3. Click **Add** to save changes.
+3. Click **Edit** to save changes.
 
 ## Cost Model Details
 
@@ -133,7 +127,7 @@ The cost model details page provides comprehensive information about a specific 
 **Price List**:
 - Complete list of configured billing items and methods
 - **Add Price**: Button to add new price configurations
-- **Modify/Delete**: Actions available for each price item
+- **EditDelete**: Actions available for each price item
 
 ### Editing Cost Model Details
 
@@ -145,28 +139,14 @@ The cost model details page provides comprehensive information about a specific 
 
 **Price List**: 
 - Add new price configurations using the **Add Price** button
-- Modify existing prices using the **Modify** button for each item
+- Modify existing prices using the **Edit** button for each item
 - Delete price items using the **Delete** button (requires confirmation)
 
-## Best Practices
+## Price By Label
 
-1. **Planning**: Plan your billing strategy before creating cost models
-2. **Naming**: Use descriptive names for cost models to facilitate management
-3. **Testing**: Test cost models with a small set of clusters before full deployment
-4. **Monitoring**: Regularly review billing data to ensure cost models are working as expected
-5. **Documentation**: Maintain clear descriptions for each cost model
+The price by label feature allows you to set different prices for different label values.
 
-## Troubleshooting
+The labels we currently support are obtained from Prometheus, and the specific metrics are: `kube_pod_labels`.
 
-**No billing data after creating cost model:**
-- Verify the cost model is associated with the correct clusters
-- Ensure clusters have the metering/billing client component installed
-- Wait until the next hour for billing data to appear
-
-**Clusters not available for selection:**
-- Check if clusters are already associated with other cost models
-- Verify metering/billing client components are installed on the clusters
-
-**Billing data inconsistencies:**
-- Review cost model configuration for accuracy
-- Check if recent changes are still within the implementation delay period 
+   - The product currently defaults to collecting these labels from the pod into the kube_pod_1abels metric: `app`,`mon`,`osd`,`mds`,`mgr`,`rgw`,`service_name`,`middleware.instance/name`,`middleware.instance/type`
+   - If you need to add more labels, you can add them to the `kube_pod_labels` metric in the Prometheus configuration file.
