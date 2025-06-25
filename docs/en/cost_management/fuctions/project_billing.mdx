@@ -1,0 +1,88 @@
+---
+weight: 40
+---
+
+# Project-Level Billing
+
+Project-level billing provides cost visibility at the project level for project administrators and developers.
+
+## Overview
+
+Project-level billing is available under the project management interface with role-based access control, ensuring users can only view billing data for projects and namespaces they have permissions for.
+
+## Navigation
+
+To access project-level billing:
+1. Navigate to the **Projects** interface
+2. Locate **Metering and Billing** 
+3. Contains two sub-pages: **Cost Statistics** and **Cost Details**
+
+:::info
+The Metering and Billing menu is controlled by the feature gate `ait-billing`.
+:::
+
+## Cost Statistics
+
+Provides summarized cost information for projects and namespaces you have access to.
+
+### Features
+
+- Same display fields as platform-level cost statistics
+- Automatic data filtering based on user permissions
+- Support for time range selection, statistical granularity, and billing item filtering
+- Usage statistics alongside cost information
+
+### Usage
+
+#### Cost Statistics
+
+1. Click **Metering and Billing** > **Cost Statistics**
+2. Configure search criteria:
+   - **Aggregation By**: Choose project, namespace, or cluster views
+   - **Separate Items**: Display costs separately by item type
+   - **Interval**: Select monthly, weekly, or daily intervals
+   - **Select Time**: Select the period for cost analysis
+3. Click **Search** to view cost statistics
+
+#### Usage Statistics
+
+1. Click **Metering and Billing** > **Cost Statistics**
+2. Switch to **Usages** tab
+3. Configure search criteria:
+   - **Aggregation By**: Choose project, namespace, or cluster views
+   - **Interval**: Select monthly, weekly, or daily intervals
+   - **Billing Item**: Filter by resource types
+   - **Method**: Filter by measurement method
+   - **Select Time**: Select the period for usage analysis
+4. Click **Search** to view usage statistics
+
+:::warning
+Only clusters associated with cost models are counted. Contact the platform administrator to configure cost models if cluster billing data is missing.
+:::
+
+## Cost Details
+
+Query detailed billing records within your project scope.
+
+### Features
+
+- Same display fields as platform-level cost details
+- Project filtering hidden (automatically set to current project)
+- Cluster and namespace filters restricted based on permissions
+- Support for search, column customization, and data export
+
+### Usage
+
+1. Click **Metering and Billing** > **Cost Details**
+2. Configure search criteria:
+   - **Select Time**: Select billing period (maximum 1 year)
+   - **Cluster**: Choose from available clusters
+   - **Namespace**: Select from authorized namespaces
+   - **Billing Item**: Filter by resource types
+   - **Method**: Filter by measurement method
+3. Use additional features:
+   - **Search by Name**: Find specific resources
+   - **Column Settings**: Customize displayed fields
+   - **Export**: Download CSV format data
+   - **HHide Zero-Cost Items**: Exclude zero-cost records
+4. Click **Search** to view detailed billing records

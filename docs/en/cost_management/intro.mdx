@@ -1,0 +1,29 @@
+---
+weight: 10
+sourceSHA: 6f90a37045dd3402b2a4c4117632d9d1dfba25c24a6b497c1971c93254de602f
+---
+
+# Introduction
+
+In the rapidly evolving era of cloud computing, enterprises require a flexible and precise billing model to manage and optimize their cloud resource expenditures. The platform offers a billing product specifically designed for cloud-native scenarios, assisting you in achieving detailed resource management and cost control.
+
+The platform provides comprehensive metering and billing capabilities with flexible cost models and multiple billing methods, supporting the measurement and billing of CPU, memory, and storage resources within clusters, as well as offering statistics and detailed viewing capabilities.
+
+Key features include:
+
+- **Cost Model Management**: Define and manage billing models with different pricing strategies for various clusters
+- **Multiple Billing Methods**: Support for usage-based, request-based, effective usage, and project quota billing
+- **Platform-Level Billing**: 
+  - Cost Statistics: Supports platform administrators in summarizing the costs for each tenant
+  - Cost Details: Allows platform administrators to query the cost details for each tenant for reconciliation purposes
+- **Project-Level Billing**: Role-based cost visibility for project administrators and developers to manage their own costs
+- **Label-Based Pricing**: Differentiated pricing based on resource labels for flexible cost allocation
+
+## Usage Limitations
+
+- **Dependency on Prometheus**: Metering data is obtained based on Prometheus; please ensure that the clusters requiring metering have installed the Alauda Container Platform Monitor with Prometheus plugin before installation.
+- **Resource Type Limitations**: Currently, only CPU, memory, and storage resource metering and billing are supported; other resource types are not supported at this time.
+- **Cluster Compatibility**: Features may not be compatible with all types of Kubernetes clusters and should be used in supported cluster environments.
+- **Data Latency**: Due to the latency of the data collection link, there may be some delay in the measurement data.
+
+Based on this functionality, we hope to help users better manage and optimize their container platform's resource usage, achieving more efficient cost control.

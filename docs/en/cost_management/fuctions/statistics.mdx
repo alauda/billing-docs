@@ -1,0 +1,25 @@
+---
+weight: 10
+---
+
+# Cost Statistics
+
+:::warning
+Metering and billing is only an `Alpha` feature. You need to enable this feature by turning on the feature gate : `ait-billing`.
+:::
+
+The cost statistics feature supports analyzing resource costs on the platform across various dimensions. The supported dimensions are as follows:
+
+- Statistics Granularity: Supports cost statistics based on project, cluster, or namespace.
+- Interval: Supports cost statistics on a monthly, weekly, or daily basis.
+- Separate Billing Items: You can specify whether to display the costs of each billing item separately, such as CPU, memory, or storage.
+- Usage Statistics: View usage data alongside cost information
+
+1. In the left navigation bar, click **Metering and Billing** > **Cost Statistics**.
+
+2. After selecting the time granularity, reporting interval, whether to distinguish billing items, and defining the time range, configure the name filter, and click the **Search** button to view the corresponding statistical data.
+
+   **Note**:
+
+   - The platform only supports data queries within a maximum period of one year.
+   - Only clusters with associated cost models will show billing data. To configure cost models, read [Cost Model Management](./cost_model_management.mdx).

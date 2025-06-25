@@ -1,5 +1,5 @@
 ---
-weight: 50
+weight: 14
 sourceSHA: a5eb828cb2c78fa71828524f15c995074069156dab594f768fb09206779dc686
 ---
 
@@ -34,7 +34,7 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.user
 kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.password}\|base64 -d
 ```
 
-2. In the left navigation bar, click **App Store** > **Plugin Management**.
+2. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
 
 3. Select the `global` cluster.
 
@@ -47,9 +47,6 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
    | **Clickhouse Address**     | Configure the Clickhouse connection address                               |
    | **Clickhouse Cluster Name**| The cluster name for Clickhouse; the default for platform-created Clickhouse is `replicated.` |
    | **Clickhouse Secret Name** | Configure the Secret for Clickhouse username and password               |
-   | **CPU Unit Price**         | Set the CPU billing unit price; the platform will bill based on effective usage (core-hours), which is the maximum value between Request and Usage within one hour. |
-   | **Memory Unit Price**      | Set the memory billing unit price; the platform will bill based on effective usage (core-hours), which is the maximum value between Request and Usage within one hour. |
-   | **Storage Unit Price**     | Set the storage billing unit price; the platform will bill based on request volume (GiB-hours), which is the size of the storage space requested by PV. |
    | **Currency Unit**          | Choose the currency unit to display expenses.                            |
 
 6. Click **Install**.
@@ -62,7 +59,7 @@ kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.pass
 
 ### Steps
 
-1. In the left navigation bar, click **App Store** > **Plugin Management**.
+1. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
 
 2. Select the cluster where this plugin needs to be installed.
 

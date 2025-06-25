@@ -1,0 +1,43 @@
+---
+weight: 20
+sourceSHA: b0559ecb754ad3e900c65277435c620b2f1485c357bd8876317f56bfa2615841
+---
+
+# Concepts
+
+## Opencost
+
+**OpenCost** is an open-source Kubernetes cost monitoring and management tool designed to track and analyze resource usage and costs in Kubernetes clusters in real time. It provides accurate resource metering data to help users optimize resource allocation and control costs.
+
+For more information, please refer to the [OpenCost official website](https://www.opencost.io/docs/).
+
+## Cost Model
+
+A **Cost Model** defines the billing rules and pricing for resources within clusters. It includes:
+
+- **Billing Items**: Resources to be billed (CPU, Memory, Storage)
+- **Billing Methods**: How resources are measured and billed
+- **Unit Prices**: Base pricing for each resource type
+- **Label-based Pricing**: Differentiated pricing based on labels
+- **Cluster Association**: Which clusters the model applies to
+
+Cost models help you define the resources and unit prices that need to be billed in clusters. The platform will measure and bill for each cluster based on the cost model.
+
+## Billing Method Description
+
+| Billing Item | Billing Method           | Billing Rules                                                                                                             | Description                                                 |
+|--------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| **CPU**      | Usage (Core-hours)       | Calculated on an hourly basis using the POD's AVG(Usage) over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on actual CPU consumption |
+| **CPU**      | Request (Core-hours)     | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on CPU resource requests |
+| **CPU**      | Effective Usage (Core-hours)| Calculated on an hourly basis using the higher value of the POD's AVG(Usage) and Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Current default method, uses the higher of usage or request |
+| **CPU**      | Project Quota (Core-hours) | Calculated on an hourly basis using the project's allocated CPU quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+| **Memory**   | Usage (GiB-hours)        | Calculated on an hourly basis using the POD's AVG(Usage) over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on actual memory consumption |
+| **Memory**   | Request (GiB-hours)      | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on memory resource requests |
+| **Memory**   | Effective Usage (GiB-hours)| Calculated on an hourly basis using the higher value of the POD's AVG(Usage) and Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Current default method, uses the higher of usage or request |
+| **Memory**   | Project Quota (GiB-hours) | Calculated on an hourly basis using the project's allocated memory quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+| **Storage**  | Request Volume (GiB-hours) | Calculated on an hourly basis using the Request size of the PV over the past hour, multiplied by the actual duration of the PV (counted as 5 minutes if less than 5 minutes). If a PV is simultaneously mounted to multiple PODs, the usage of the PV will be evenly distributed among each POD. | PVs that are not mounted to any POD will be counted as unmounted records, with the object name being `*unmounted-pvcs`. |
+
+
+Current statistical issues will be addressed in future versions:
+
+- When a StatefulSet POD is stopped and restarted, the platform will use the earliest running time of the POD on that day as the start time and the latest running time as the end time, while ignoring the time in between when the POD was not running.
