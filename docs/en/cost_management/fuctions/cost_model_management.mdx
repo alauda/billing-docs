@@ -146,7 +146,30 @@ The cost model details page provides comprehensive information about a specific 
 
 The price by label feature allows you to set different prices for different label values.
 
-The labels we currently support are obtained from Prometheus, and the specific metrics are: `kube_pod_labels`.
+- The labels we currently support are obtained from Prometheus, and the specific metrics are: `kube_pod_labels`.
+- The product currently defaults to collecting these labels from the pod into the kube_pod_labels metric: `app`,`mon`,`osd`,`mds`,`mgr`,`rgw`,`service_name`,`middleware.instance/name`,`middleware.instance/type`.
 
-   - The product currently defaults to collecting these labels from the pod into the kube_pod_1abels metric: `app`,`mon`,`osd`,`mds`,`mgr`,`rgw`,`service_name`,`middleware.instance/name`,`middleware.instance/type`
-   - If you need to add more labels, you can add them to the `kube_pod_labels` metric in the Prometheus configuration file.
+### Adding Custom Labels
+
+If you need to add more labels, please follow the steps below:
+
+1. Log in to the global master node and modify the corresponding moduleinfo.yaml file.
+
+2. For Prometheus, follow the steps below:
+
+```bash
+kubectl get moduleinfo -A | grep prometheus | grep <cluster-name>
+ 
+kubectl edit moduleinfo
+---
+spec:
+  valuesOverride:
+    ait/chart-kube-prometheus:
+      exporter-kube-state:
+        additionalPodLabels:
+        - label1
+        - label2                      #Add custom Labels in this format
+---
+```
+
+3. After modifying the moduleinfo.yaml file, waiting for the restart of the Prometheus service to take effect.
