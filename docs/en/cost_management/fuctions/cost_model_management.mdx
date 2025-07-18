@@ -151,25 +151,25 @@ The price by label feature allows you to set different prices for different labe
 
 ### Adding Custom Labels
 
-If you need to add more labels, please follow the steps below:
+If you need to add more labels, please follow the procedure below:
 
-1. Log in to the global master node and modify the corresponding moduleinfo.yaml file.
+1. Log in to the global control plane node and modify the corresponding `moduleinfo.yaml` file.
 
-2. For Prometheus, follow the steps below:
+2. For Prometheus, follow the procedure below:
 
-```bash
-kubectl get moduleinfo -A | grep prometheus | grep <cluster-name>
- 
-kubectl edit moduleinfo
----
-spec:
-  valuesOverride:
-    ait/chart-kube-prometheus:
-      exporter-kube-state:
-        additionalPodLabels:
-        - label1
-        - label2                      #Add custom Labels in this format
----
-```
+   ```bash
+   kubectl get moduleinfo -A | grep prometheus | grep <cluster-name>
+   
+   kubectl edit moduleinfo
+   ---
+   spec:
+   valuesOverride:
+      ait/chart-kube-prometheus:
+         exporter-kube-state:
+         additionalPodLabels:
+         - label1
+         - label2                      #Add custom Labels in this format
+   ---
+   ```
 
 3. After modifying the moduleinfo.yaml file, waiting for the restart of the Prometheus service to take effect.
