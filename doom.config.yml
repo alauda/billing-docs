@@ -1,6 +1,6 @@
 title: CostManagement Docs
 logoText: CostManagement Docs
-lang: zh
+lang: en
 api:
   crds:
     - docs/shared/crds/*.yaml
