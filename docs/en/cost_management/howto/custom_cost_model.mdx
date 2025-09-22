@@ -1,0 +1,200 @@
+---
+weight : 10
+---
+
+# How to Define a Custom Cost Model
+
+This guide shows how to add new billing items by defining a custom cost model. The workflow has four parts:
+
+- Prepare usage metrics
+- Prepare label metrics
+- Add a collection config for the Cost Management Agent
+- Add a display config for the Cost Management Server
+
+As a concrete example, we will add two GPU billing items: GPU Compute(cores) and GPU Memory , and enable pricing by label.
+
+## Prepare Usage Metrics
+
+Usage metrics represent the consumption to be billed. Provide a PromQL query that aggregates usage per step (for example, 5m). Each step yields one data point that represents usage over the preceding window; the final usage is the sum across the selected time range.
+
+Prometheus metric types include Counter, Gauge, Summary, and Histogram. For usage, use Counter or Gauge. Examples:
+
+```yaml
+# Counter example (e.g., GPU core usage time):
+vgpu_core_usage_seconds_total{"containeridx":"0","deviceuuid":"GPU-2eec4202-80dc-870f-3ca5-25879d96eca7","endpoint":"monitor","instance":"10.3.0.130:9395","ip":"192.168.131.32","job":"hami-scheduler","namespace":"kube-system","node_name":"192.168.131.32","nodename":"192.168.133.48","pod":"hami-scheduler-86b7ff47c6-sp7kb","podname":"pytorch-cuda12-1-57d9ff4544-bqkvg","podnamespace":"yulin-2","service":"hami-scheduler","zone":"vGPU"}
+
+# Corresponding usage query (step = 5m):
+sum by (deviceuuid, podnamespace) (rate(vgpu_core_usage_seconds_total{}[5m])) 
+
+
+# Gauge example (e.g., GPU memory usage in bytes):
+vgpu_memory_usage_bytes{"containeridx":"0","deviceuuid":"GPU-2eec4202-80dc-870f-3ca5-25879d96eca7","endpoint":"monitor","instance":"10.3.0.130:9395","ip":"192.168.131.32","job":"hami-scheduler","namespace":"kube-system","node_name":"192.168.131.32","nodename":"192.168.133.48","pod":"hami-scheduler-86b7ff47c6-sp7kb","podname":"pytorch-cuda12-1-57d9ff4544-bqkvg","podnamespace":"yulin-2","service":"hami-scheduler","zone":"vGPU"}
+
+# Corresponding usage query (step = 5m):
+sum by (deviceuuid, podnamespace) (avg_over_time(vgpu_memory_usage_bytes{}[5m]))
+```
+
+## Prepare Label Metrics
+
+Label metrics attach attributes to usage so you can price by labels. They must be joinable with the usage metrics—share at least one label (such as `deviceuuid`)—so the system can enrich usage with those attributes.
+
+For label metrics, use Gauge. Example:
+
+```yaml
+# Label metrics (label fields start with label_ in this example):
+vgpu_device_labels{"deviceuuid":"GPU-2eec4202-80dc-870f-3ca5-25879d96eca7","label_device":"nvidia","label_modelName":"Tesla T4","podnamespace":"yulin-1"}
+
+# Query for label metrics:
+vgpu_device_labels{}
+
+# How the usage and label queries relate (GPU core & memory example):
+# 1) The usage query groups by (deviceuuid, podnamespace) and each series includes deviceuuid
+# 2) The label query groups by its own labels and each series includes deviceuuid
+# 3) Because both include the unique deviceuuid, labels from the label query can be attached to usage
+```
+
+## Add Collection Config (Cost Management Agent)
+
+Create a ConfigMap in each cluster where the Cost Management Agent runs to declare what to collect.
+
+A typical collected record (GPU core/memory) maps to config fields as shown:
+
+```yaml
+{
+    "id": "cab9881e380fcf72726ccf45565ffc2d",           # Auto-generated from agreed fields
+    "kind": "Vgpu",                                     # Matches kind in config
+    "name": "GPU-2eec4202-80dc-870f-3ca5-25879d96eca7", # From usage.mappers.name
+    "namespace": "cpaas-system",                        # From usage.mappers.namespace
+    "cluster": "default-cluster",                       # Cluster where the agent runs
+    "project": "cpaas-system",                          # Derived from namespace
+    "labels": {                                          # From labels.query if configured
+        "key1": "val1",
+        "key2": "val2"
+    },
+    "date": "2024-04-29T00:00:00Z",                     # Start of that day
+    "period": "hourly",                                 # Matches period in config
+    "start": "2024-04-29T00:05:00Z",                    # Period start
+    "end": "2024-04-29T00:59:59Z",                      # Period end
+    "category": "VgpuCore",                             # Matches category in config
+    "item": "VgpuCoreUsed",                             # Matches item in config
+    "usage": 200                                         # From usage query result
+}  
+```
+
+Now create the ConfigMap for the agent (GPU core & memory):
+
+```yaml
+apiVersion: v1
+data:
+  config: |
+    - kind: Vgpu                                        # Required; must be consistent with server config
+      category: VgpuCore                                # Required; must be consistent with server config
+      item: VgpuCoreUsed                                # Required and unique; must match server config
+      period: Hourly                                    # Required; Hourly or Daily; prefer Hourly
+      labels:                                           # Optional; enrich usage with labels from this query
+        query: "vgpu_core_labels{}"                     # E.g., add GPU model, vendor to labels
+        mappers:
+          name: deviceuuid                              # Map deviceuuid as name
+          namespace: podnamespace                       # Map podnamespace as namespace
+          cluster: ""                                   # Leave empty to auto-fill current cluster
+          project: ""                                   # Leave empty to auto-fill project from namespace
+      usage:                                            # Required; usage query (grouped by deviceuuid,podnamespace)
+        query: "sum by (deviceuuid, podnamespace) (rate(vgpu_core_usage_seconds_total{}[5m]))"
+        step: 5m                                        # Required; step for sampling points
+        mappers:
+          name: deviceuuid                              # Map deviceuuid to name
+          namespace: podnamespace                       # Map podnamespace to namespace
+          cluster: ""                                   # Auto-fill if empty
+          project: ""                                   # Auto-fill if empty
+    - kind: Vgpu                                        # Second billing item
+      category: VgpuMemory                              # Must be consistent with server config
+      item: VgpuMemoryUsed                              # Unique item name
+      period: Hourly
+      labels:
+        query: "vgpu_core_labels{}"
+        mappers:
+          name: deviceuuid
+          namespace: podnamespace
+          cluster: ""
+          project: ""
+      usage:
+        query: "sum by (deviceuuid, podnamespace) (avg_over_time(vgpu_memory_usage_bytes{}[5m]))"
+        step: 5m
+        mappers:
+          name: deviceuuid
+          namespace: podnamespace
+          cluster: ""
+          project: ""
+kind: ConfigMap
+metadata:
+  labels:
+    cpaas.io/slark.collection.config: "true"            # Required; enables collection config
+  name: slark-agent-project-config-vgpu
+  namespace: cpaas-system
+```
+
+After adding the yaml , you need to restart the Agent Pod to reload the configurations.
+
+```bash
+kubectl delete pods -n cpaas-system -l service_name=slark-agent
+```
+
+
+## Add Display/Storage Config (Cost Management Server)
+
+Create a ConfigMap in the cluster where the Cost Management Server runs to declare billing items, methods, units, and display names. This tells the server what and how to bill.
+
+```yaml
+apiVersion: v1
+data:
+  config: |
+    - name: VgpuCore                                     # Billing item name; must match category above
+      displayname:
+        zh: "Vgpu"
+        en: "Vgpu"
+      methods:                                           # List of billing methods (unique names)
+        - name: Usage                                    # Method name
+          displayname:
+            zh: "使用量"
+            en: "Used Usage"
+          item: VgpuCoreUsed                             # Must match the agent config item
+          divisor: 1000                                  # Unit conversion (e.g., mCPU to cores)
+          unit:
+            zh: "core-hours"
+            en: "core-hours"
+    - name: VgpuMemory                                   # Second billing item
+      displayname:
+        zh: "Vgpu 显存"
+        en: "VgpuMemory"
+      methods:
+        - name: Used
+          displayname:
+            zh: "使用量"
+            en: "Used Usage"
+          item: VgpuMemoryUsed
+          divisor: 1073741824                            # bytes -> Gi
+          unit:
+            zh: "Gi-hours"
+            en: "Gi-hours"
+kind: ConfigMap
+metadata:
+  labels:
+    cpaas.io/slark.display.config: "true"                # Required; enables display/storage config
+  name: slark-display-config-for-vgpu
+  namespace: cpaas-system
+```
+
+After adding the yaml , you need to restart the Server Pod to reload the configurations.
+
+```bash
+kubectl delete pods -n cpaas-system -l service_name=slark
+```
+
+## Notes and Best Practices
+
+- Keep naming consistent across agent and server configs: `kind`, `category`, and `item` must match.
+- Prefer Hourly for finer granularity and faster feedback.
+- Ensure label metrics can be joined with usage via a shared label (for example, `deviceuuid`).
+- Validate PromQL locally before rollout; monitor initial runs for data sanity.
+- Start small (few clusters/items), then scale after validation.
+
