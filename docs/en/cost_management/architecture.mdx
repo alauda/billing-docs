@@ -23,4 +23,4 @@ The platform provides overall metering and billing capabilities through the coop
 
   - Interfaces with Prometheus, providing an exporter to store metering and billing metrics data in Prometheus.
 
-  - Connects to **Alauda Container Platform Cost Management Server**, aggregates and calculates the metering and billing data for all resources in the cluster from the previous day at 12:30 AM each day, and reports it to the server. If the report fails, it will attempt to resend every two hours until successful.
+  - Connects to **Alauda Container Platform Cost Management Server**, aggregates and calculates the metering and billing data for all resources in the cluster hourly, and reports it to the server. If the report fails, it will attempt to resend in next hour until successful.

@@ -30,8 +30,8 @@ The **Cost Management Server** component relies on ClickHouse as its data storag
    kubectl get feature log-center -o jsonpath='{.spec.accessInfo.clickhouse.address}'
 
    # Obtain Clickhouse username and password:
-   kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.username}\|base64 -d
-   kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.password}\|base64 -d
+   kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.username}|base64 -d
+   kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.password}|base64 -d
    ```
 
 2. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
