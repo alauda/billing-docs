@@ -1,3 +1,17 @@
 - name: acp
   base: /container_platform
   version: "4.0"
+- name: hami
+  displayName:
+    en: Alauda Build of Hami
+    zh: Alauda Build of Hami
+  base: /hami
+  version: "2.6"
+  repo: https://github.com/alauda/hami-docs
+- name: pgpu
+  displayName:
+    en: Alauda Build of NVIDIA GPU Device Plugin
+    zh: Alauda Build of NVIDIA GPU Device Plugin
+  base: /pgpu
+  version: "0.17"
+  repo: https://github.com/alauda/pgpu-doc
