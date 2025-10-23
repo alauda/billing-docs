@@ -7,7 +7,11 @@ sourceSHA: a5eb828cb2c78fa71828524f15c995074069156dab594f768fb09206779dc686
 
 This article will introduce how to install the components required for metering and billing.
 
+
+
 ## Preinstall Considerations
+
+- Download the latest version of the Cost Management Plugin from Custom Portal and upload it to the platform by `violet`.
 
 - The **Cost Management Server** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
 
@@ -15,7 +19,7 @@ This article will introduce how to install the components required for metering 
 
 - The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
 
-## Install the Cost Management Server Plugin
+## Install the Cost Management Server Plugin via Console
 
 ### Prerequisites
 
@@ -36,7 +40,7 @@ The **Cost Management Server** component relies on ClickHouse as its data storag
 
 2. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
 
-3. Select the `global` cluster.
+3. Select the cluster which you plan to install the plugin.
 
 4. Find the Cost Management Server plugin and click the Install button in the right actions bar.
 
@@ -51,7 +55,30 @@ The **Cost Management Server** component relies on ClickHouse as its data storag
 
 6. Click **Install**.
 
-## Install the Cost Management Agent Plugin
+## Install the Cost Management Server Plugin via YAML
+
+## Install the Cost Management Essential Plugin via Console
+
+### Prerequisites
+
+The **Cost Management Essential Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin**   first.
+
+### Procedure
+
+1. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
+
+2. Select the `global` cluster.
+
+3. Find the Cost Management Server plugin and click the Install button in the right actions bar.
+
+4. Select the cluster name which installed the `Cost Management Server plugin`
+
+5. Click **Install**.
+
+## Install the Cost Management Essential Plugin via YAML
+
+
+## Install the Cost Management Agent Plugin via Console
 
 ### Prerequisites
 
@@ -64,3 +91,5 @@ The **Cost Management Server** component relies on ClickHouse as its data storag
 2. Select the cluster where this plugin needs to be installed.
 
 3. Find the Cost Management Agent plugin and click the Install button in the right actions bar.
+
+## Install the Cost Management Agent Plugin via YAML
