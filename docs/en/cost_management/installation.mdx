@@ -7,15 +7,15 @@ sourceSHA: a5eb828cb2c78fa71828524f15c995074069156dab594f768fb09206779dc686
 
 This article will introduce how to install the components required for metering and billing.
 
-
-
 ## Preinstall Considerations
 
 - Download the latest version of the Cost Management Plugin from Custom Portal and upload it to the platform by `violet`.
 
-- The **Cost Management Server** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
+- The **Cost Management Server**, **Cost Management Essentials** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
 
 - The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
+
+- The **Cost Management Essentials** needs to integrate with the **Cost Management Server** component.
 
 - The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
 
@@ -23,7 +23,7 @@ This article will introduce how to install the components required for metering 
 
 ### Prerequisites
 
-The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
+The **Cost Management Server Plugin** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
 
 ### Procedure
 
@@ -57,11 +57,84 @@ The **Cost Management Server** component relies on ClickHouse as its data storag
 
 ## Install the Cost Management Server Plugin via YAML
 
-## Install the Cost Management Essential Plugin via Console
+### 1. Check available versions
+
+Ensure the plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
+
+```shell
+
+# kubectl get moduleplugin | grep cost-server
+cost-server                       30h
+# kubectl get moduleconfig | grep cost-server
+cost-server-v4.1.0                30h
+```
+
+This indicates that the ModulePlugin `cost-server` exists in the cluster and version `v4.1.0` is published.
+
+### 2. Create a ModuleInfo
+
+Create a ModuleInfo resource to install the plugin without any configuration parameters:
+
+```yaml
+kind: ModuleInfo
+apiVersion: cluster.alauda.io/v1alpha1
+metadata:
+  name: global-cost-server
+  labels:
+    cpaas.io/cluster-name: global
+    cpaas.io/module-name: cost-server
+    cpaas.io/module-type: plugin
+spec:
+  version: v4.1.0
+  config:
+    global:
+      clickhouse:
+        address: https://xxx.xxx.xxx.xxx:xx/clickhouse
+        authSecret: clickhouse-basic-auth
+        cluster: replicated
+      currency: CNY(¥)
+```
+
+YAML field reference (cost-server):
+
+| Field path | Description |
+| --- | --- |
+| `metadata.labels.cpaas.io/cluster-name` | Target cluster name where the plugin is installed. |
+| `metadata.labels.cpaas.io/module-name` | Must be `cost-server`. |
+| `metadata.labels.cpaas.io/module-type` | Must be `plugin`. |
+| `metadata.name` | ModuleInfo name (e.g., `<cluster>-cost-server`). |
+| `spec.version` | Plugin version to install. |
+| `spec.config.global.clickhouse.address` | Configure the Clickhouse connection address. |
+| `spec.config.global.clickhouse.authSecret` | Configure the Secret for Clickhouse username and password. |
+| `spec.config.global.clickhouse.cluster` | The cluster name for Clickhouse; the default for platform-created Clickhouse is `replicated.` |
+| `spec.config.global.currency` | Choose the currency unit to display expenses. Support: CNY(¥)/USD($)/THB(฿)/RUB(₽)/AUD(AU$)/CAD(CA$)/CHF(Fr.)/DKK(kr.)/EUR(€)/GBP(£)/IDR(Rp)/INR(₹)/JPY(JP¥)/HKD(HK)/SGD(SG$) |
+
+### 3. Verify installation
+
+Since the ModuleInfo name changes upon creation, locate the resource via label to check the plugin status and version:
+
+```shell
+kubectl get moduleinfo -l cpaas.io/module-name=cost-server
+NAME                                             CLUSTER         MODULE            DISPLAY_NAME     STATUS    TARGET_VERSION   CURRENT_VERSION   NEW_VERSION
+global-e671599464a5b1717732c5ba36079795          global          cost-server       cost-server      Running   v4.1.0           v4.1.0            v4.1.0
+```
+
+Field explanations:
+
+* `NAME`: ModuleInfo resource name
+* `CLUSTER`: Cluster where the plugin is installed
+* `MODULE`: Plugin name
+* `DISPLAY_NAME`: Display name of the plugin
+* `STATUS`: Installation status; `Running` means successfully installed and running
+* `TARGET_VERSION`: Intended installation version
+* `CURRENT_VERSION`: Version before installation
+* `NEW_VERSION`: Latest available version for installation
+
+## Install the Cost Management Essentials Plugin via Console
 
 ### Prerequisites
 
-The **Cost Management Essential Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin**   first.
+The **Cost Management Essentials Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
 
 ### Procedure
 
@@ -75,14 +148,79 @@ The **Cost Management Essential Plugin** needs to integrate with the **Cost Mana
 
 5. Click **Install**.
 
-## Install the Cost Management Essential Plugin via YAML
+## Install the Cost Management Essentials Plugin via YAML
 
+### 1. Check available versions
+
+Ensure the plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
+
+```shell
+
+# kubectl get moduleplugin | grep cost-api
+cost-api                       30h
+# kubectl get moduleconfig | grep cost-api
+cost-api-v4.1.0                30h
+```
+
+This indicates that the ModulePlugin `cost-api` exists in the cluster and version `v4.1.0` is published.
+
+### 2. Create a ModuleInfo
+
+Create a ModuleInfo resource to install the plugin without any configuration parameters:
+
+```yaml
+kind: ModuleInfo
+apiVersion: cluster.alauda.io/v1alpha1
+metadata:
+  name: global-cost-api
+  labels:
+    cpaas.io/cluster-name: global
+    cpaas.io/module-name: cost-api
+    cpaas.io/module-type: plugin
+spec:
+  version: v4.1.0
+  config:
+    crossClusterDependency:
+      costServer: business-1
+```
+
+YAML field reference (cost-api):
+
+| Field path | Description |
+| --- | --- |
+| `metadata.labels.cpaas.io/cluster-name` | Must be `global`. |
+| `metadata.labels.cpaas.io/module-name` | Must be `cost-api`. |
+| `metadata.labels.cpaas.io/module-type` | Must be `plugin`. |
+| `metadata.name` | ModuleInfo name (e.g., `<cluster>-cost-api`). |
+| `spec.version` | Plugin version to install. |
+| `spec.config.crossClusterDependency.costServer` | Configure the cluster name which installed the `Cost Management Server plugin` |
+
+### 3. Verify installation
+
+Since the ModuleInfo name changes upon creation, locate the resource via label to check the plugin status and version:
+
+```shell
+kubectl get moduleinfo -l cpaas.io/module-name=cost-api
+NAME                                             CLUSTER         MODULE            DISPLAY_NAME     STATUS    TARGET_VERSION   CURRENT_VERSION   NEW_VERSION
+global-e671599464a5b1717732c5ba36079795          global          cost-api          cost-api         Running   v4.1.0           v4.1.0            v4.1.0
+```
+
+Field explanations:
+
+* `NAME`: ModuleInfo resource name
+* `CLUSTER`: Cluster where the plugin is installed
+* `MODULE`: Plugin name
+* `DISPLAY_NAME`: Display name of the plugin
+* `STATUS`: Installation status; `Running` means successfully installed and running
+* `TARGET_VERSION`: Intended installation version
+* `CURRENT_VERSION`: Version before installation
+* `NEW_VERSION`: Latest available version for installation
 
 ## Install the Cost Management Agent Plugin via Console
 
 ### Prerequisites
 
-- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent Plugin** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
 
 ### Procedure
 
@@ -92,4 +230,63 @@ The **Cost Management Essential Plugin** needs to integrate with the **Cost Mana
 
 3. Find the Cost Management Agent plugin and click the Install button in the right actions bar.
 
+4. Select the cluster name which installed the `Cost Management Server plugin`
+
+5. Click **Install**.
+
 ## Install the Cost Management Agent Plugin via YAML
+
+### 1. Check available versions
+
+Ensure the plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
+
+```shell
+
+# kubectl get moduleplugin | grep cost-agent
+cost-agent                       30h
+# kubectl get moduleconfig | grep cost-agent
+cost-agent-v4.1.0                30h
+```
+
+This indicates that the ModulePlugin `cost-agent` exists in the cluster and version `v4.1.0` is published.
+
+### 2. Create a ModuleInfo
+
+Create a ModuleInfo resource to install the plugin without any configuration parameters:
+
+```yaml
+kind: ModuleInfo
+apiVersion: cluster.alauda.io/v1alpha1
+metadata:
+  name: global-cost-agent
+  labels:
+    cpaas.io/cluster-name: global
+    cpaas.io/module-name: cost-agent
+    cpaas.io/module-type: plugin
+spec:
+  version: v4.1.0
+  config:
+    crossClusterDependency:
+      costServer: business-1
+```
+
+YAML field reference (cost-agent):
+
+| Field path | Description |
+| --- | --- |
+| `metadata.labels.cpaas.io/cluster-name` | Target cluster name where the plugin is installed. |
+| `metadata.labels.cpaas.io/module-name` | Must be `cost-agent`. |
+| `metadata.labels.cpaas.io/module-type` | Must be `plugin`. |
+| `metadata.name` | ModuleInfo name (e.g., `<cluster>-cost-agent`). |
+| `spec.version` | Plugin version to install. |
+| `spec.config.crossClusterDependency.costServer` | Configure the cluster name which installed the `Cost Management Server plugin` |
+
+### 3. Verify installation
+
+Since the ModuleInfo name changes upon creation, locate the resource via label to check the plugin status and version:
+
+```shell
+kubectl get moduleinfo -l cpaas.io/module-name=cost-agent
+NAME                                             CLUSTER         MODULE            DISPLAY_NAME     STATUS    TARGET_VERSION   CURRENT_VERSION   NEW_VERSION
+global-e671599464a5b1717732c5ba36079795          global          cost-agent        cost-agent       Running   v4.1.0           v4.1.0            v4.1.0
+```
