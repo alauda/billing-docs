@@ -2,7 +2,7 @@
 weight : 20
 ---
 
-# Define a pGPU Cost Model
+# How to Define a pGPU Cost Model
 
 ## Prerequisites
 
@@ -160,7 +160,15 @@ After adding the yaml , you need to restart the Server Pod to reload the configu
 kubectl delete pods -n cpaas-system -l service_name=slark
 ```
 
-## Add Price For a Cost Model
+## Add Price For a pGPU Cost Model
+
+### Billing Method Description
+
+| Billing Item        | Billing Method             | Billing Rules                                                                                                             | Description                                                 |
+|---------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| **pGPU**            | Request (Count-hours)       | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on pGPU resource requests |
+| **pGPU**            | Project Quota (Count-hours) | Calculated on an hourly basis using the project's allocated CPU quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+
 
 If the GPU cluster does not have a Cost model, you need to create a new cost model.
 Then you can add price for the cost model of the GPU cluster:

@@ -2,7 +2,7 @@
 weight : 10
 ---
 
-# Define a vGPU(Hami) Cost Model
+# How to Define a vGPU(Hami) Cost Model
 
 ## Prerequisites
 
@@ -277,10 +277,24 @@ After adding the yaml , you need to restart the Server Pod to reload the configu
 kubectl delete pods -n cpaas-system -l service_name=slark
 ```
 
-## Add Price For a Cost Model
+## Add Price For a vGPU Cost Model
 
 If the GPU cluster does not have a Cost model, you need to create a new cost model.
 Then you can add price for the cost model of the GPU cluster:
+
+### Billing Method Description
+
+| Billing Item        | Billing Method             | Billing Rules                                                                                                             | Description                                                 |
+|---------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
+| **vGPU**            | Usage (Core-hours)         | Calculated on an hourly basis using the POD's AVG(Usage) over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on actual vGPU consumption |
+| **vGPU**            | Request (Core-hours)       | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on vGPU resource requests |
+| **vGPU**            | Project Quota (Core-hours) | Calculated on an hourly basis using the project's allocated CPU quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+| **vGPUMemory**      | Usage (GiB-hours)          | Calculated on an hourly basis using the POD's AVG(Usage) over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on actual vGPU memory consumption |
+| **vGPUMemory**      | Request (GiB-hours)        | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on vGPU memory resource requests |
+| **vGPUMemory**      | Project Quota (GiB-hours)  | Calculated on an hourly basis using the project's allocated memory quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+
+
+### Add Price For a Cost Model
 
 1. Select `vGPU` or `vGPUMemory` in **Billing Items**.
 2. Select `Request Usage (core-hours)` or `Used Usage (core-hours)` or `Project Quota (core-hours)` in **Method**.
@@ -292,7 +306,7 @@ Then you can add price for the cost model of the GPU cluster:
 
     **device**: GPU manufacturer, example "nvidia" or "ascend".
 
-### Cost Details and Cost Statistics
+## Cost Details and Cost Statistics
 
 Finally, after waiting for 1 or more hours, you can see the cost details in the **Cost Details** with namespace and card uuid dimensions.
 And you can see the total costs based on cluster, project, and namespace in the **Cost Statistics**.
