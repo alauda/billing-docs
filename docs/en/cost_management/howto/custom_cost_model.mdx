@@ -24,7 +24,7 @@ Prometheus metric types include Counter, Gauge, Summary, and Histogram. For usag
 vgpu_core_usage_seconds_total{"containeridx":"0","deviceuuid":"GPU-2eec4202-80dc-870f-3ca5-25879d96eca7","endpoint":"monitor","instance":"10.3.0.130:9395","ip":"192.168.131.32","job":"hami-scheduler","namespace":"kube-system","node_name":"192.168.131.32","nodename":"192.168.133.48","pod":"hami-scheduler-86b7ff47c6-sp7kb","podname":"pytorch-cuda12-1-57d9ff4544-bqkvg","podnamespace":"yulin-2","service":"hami-scheduler","zone":"vGPU"}
 
 # Corresponding usage query (step = 5m):
-sum by (deviceuuid, podnamespace) (rate(vgpu_core_usage_seconds_total{}[5m])) 
+sum by (deviceuuid, podnamespace) (rate(vgpu_core_usage_seconds_total{}[5m]))
 
 
 # Gauge example (e.g., GPU memory usage in bytes):
@@ -78,7 +78,7 @@ A typical collected record (GPU core/memory) maps to config fields as shown:
     "category": "VgpuCore",                             # Matches category in config
     "item": "VgpuCoreUsed",                             # Matches item in config
     "usage": 200                                         # From usage query result
-}  
+}
 ```
 
 Now create the ConfigMap for the agent (GPU core & memory):
@@ -130,7 +130,7 @@ metadata:
   labels:
     cpaas.io/slark.collection.config: "true"            # Required; enables collection config
   name: slark-agent-project-config-vgpu
-  namespace: cpaas-system
+  namespace: cpaas-system                               # Required;
 ```
 
 After adding the yaml , you need to restart the Agent Pod to reload the configurations.
@@ -181,13 +181,13 @@ metadata:
   labels:
     cpaas.io/slark.display.config: "true"                # Required; enables display/storage config
   name: slark-display-config-for-vgpu
-  namespace: cpaas-system
+  namespace: kube-public                                 # Required;
 ```
 
 After adding the yaml , you need to restart the Server Pod to reload the configurations.
 
 ```bash
-kubectl delete pods -n cpaas-system -l service_name=slark
+kubectl delete pods -n cpaas-system -l service_name=slark-server
 ```
 
 ## Notes and Best Practices
