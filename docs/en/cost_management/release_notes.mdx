@@ -7,11 +7,31 @@ i18n:
 
 # Release Notes
 
-## 4.0.0
+## 4.1.0
 
 ### Features and Enhancements
 
-None
+1. **Tenant-Level Metering and Billing**
+- Introduced expense statistics and detailed expense reports from a project perspective.
+- Project administrators can now view expenses related to their specific projects.
+
+2. **Usage Statistics**
+- Both the platform-level and project-level expense statistics pages now support viewing usage statistics.
+
+3. **Billing Model Management**
+- Abstracted various billing items and billing methods into billing models to support universal metering and billing.
+- Previously, CPU, memory, and storage rates could only be set in the plugin configuration with a single billing method.
+- Now, billing models allow management of billing resources, billing methods, and unit prices for each cluster.
+- After plugin installation, there will be no default billing; administrators need to plan and configure billing models and associate them with clusters needing billing.
+- Billing models support multiple billing resources and methods.
+- Differential pricing can be set using resource tags (e.g., different prices for different GPU models).
+
+4. **Universal Metering and Billing Solution**
+- Provided a hot-pluggable universal metering and billing solution based on billing models, eliminating the need for product releases.
+- Customizable for various products/customers.
+- Requires collection and storage of billing-related metrics in the monitoring system.
+- Users must define the billing items and methods for their required resources.
+- PromQL definitions are needed for the billing items and methods used.
 
 ### Known Issues
 
