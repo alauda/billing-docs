@@ -13,6 +13,8 @@ This article will introduce how to install the components required for metering 
 
 - The **Cost Management Server**, **Cost Management Essentials** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
 
+- **Cost Management Server** supports deployment in any cluster, but the platform currently only supports deploying one server. Do not deploy multiple servers, as this may cause abnormal issues such as data duplication.
+
 - The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
 
 - The **Cost Management Essentials** needs to integrate with the **Cost Management Server** component.
