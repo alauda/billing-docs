@@ -1,0 +1,24 @@
+# llms.txt configuration for alauda/billing-docs
+# Pure-docs repo: scan the whole repo for Markdown/MDX.
+
+project_name: "Alauda Container Platform Billing"
+summary: "Cost-management and billing documentation for the Alauda Container Platform — flexible cost models, multiple billing methods, and project- and platform-level statistics."
+
+include_patterns:
+  - "**/*.md"
+  - "**/*.mdx"
+
+exclude_patterns:
+  - "**/node_modules/**"
+  - "**/.git/**"
+  - "**/llms.txt"
+  - "**/CHANGELOG.md"
+  - "**/CONTRIBUTING.md"
+  - "**/.llmstxt-cache/**"
+  - "**/.yarn/**"
+  - "**/dist/**"
+  - "**/build/**"
+
+batch_size: 15
+
+grouping_base_path: "."
