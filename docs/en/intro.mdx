@@ -22,7 +22,7 @@ Key features include:
 ## Usage Limitations
 
 - **Dependency on Monitoring**: Metering data is obtained from the cluster monitoring component. Both **Alauda Container Platform Monitor with Prometheus** and **Alauda Container Platform Monitor with VictoriaMetrics** are supported; please ensure that one of them has been installed on the clusters requiring metering before installation.
-  - VictoriaMetrics works out of the box on Alauda Container Platform 4.4.0 and later. On earlier versions, some metrics required for metering are not collected by default and must be enabled manually, otherwise no Pod-level metering data is produced. Refer to [Installation](./installation.mdx#enable-required-metrics-for-victoriametrics-on-versions-earlier-than-440).
+  - VictoriaMetrics works out of the box on Alauda Container Platform 4.4.0 and later. On earlier versions, some metrics required for metering are not collected by default and must be enabled manually, otherwise no Pod-level metering data is produced. Refer to [Installation](./installation.mdx#enable-vm-metrics).
 - **Resource Type Limitations**: Currently, only CPU, memory, and storage resource metering and billing are supported; other resource types are not supported at this time.
 - **Cluster Compatibility**: Features may not be compatible with all types of Kubernetes clusters and should be used in supported cluster environments.
 - **Data Latency**: Due to the latency of the data collection link, there may be some delay in the measurement data.

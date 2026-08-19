@@ -17,7 +17,7 @@ This article will introduce how to install the components required for metering 
 
 - The **Cost Management Essentials** needs to integrate with the **Cost Management Server** component.
 
-- The **Cost Management Agent** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-required-metrics-for-victoriametrics-on-versions-earlier-than-440).
+- The **Cost Management Agent** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 ## Install the Cost Management Server Plugin via Console
 
@@ -228,7 +228,7 @@ This article will introduce how to install the components required for metering 
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-required-metrics-for-victoriametrics-on-versions-earlier-than-440).
+- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 - The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
 
@@ -248,7 +248,7 @@ This article will introduce how to install the components required for metering 
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-required-metrics-for-victoriametrics-on-versions-earlier-than-440).
+- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 - The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
 
@@ -307,6 +307,8 @@ This article will introduce how to install the components required for metering 
     NAME                                             CLUSTER         MODULE            DISPLAY_NAME     STATUS    TARGET_VERSION   CURRENT_VERSION   NEW_VERSION
     global-e671599464a5b1717732c5ba36079795          global          cost-agent        cost-agent       Running   v4.1.0           v4.1.0            v4.1.0
     ```
+
+<a id="enable-vm-metrics"></a>
 
 ## Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0
 
