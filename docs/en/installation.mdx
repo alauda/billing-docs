@@ -17,7 +17,7 @@ This article will introduce how to install the components required for metering 
 
 - The **Cost Management Essentials** needs to integrate with the **Cost Management Server** component.
 
-- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 ## Install the Cost Management Server Plugin via Console
 
@@ -228,7 +228,7 @@ This article will introduce how to install the components required for metering 
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 - The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
 
@@ -248,7 +248,7 @@ This article will introduce how to install the components required for metering 
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 - The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
 
@@ -307,3 +307,79 @@ This article will introduce how to install the components required for metering 
     NAME                                             CLUSTER         MODULE            DISPLAY_NAME     STATUS    TARGET_VERSION   CURRENT_VERSION   NEW_VERSION
     global-e671599464a5b1717732c5ba36079795          global          cost-agent        cost-agent       Running   v4.1.0           v4.1.0            v4.1.0
     ```
+
+## Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0 \{#enable-vm-metrics}
+
+Metering and billing supports both Prometheus and VictoriaMetrics as the monitoring component of the metered cluster.
+
+On Alauda Container Platform 4.4.0 and later, VictoriaMetrics collects all metrics required by metering and billing, so no extra configuration is needed. On earlier versions, the kube-state-metrics allowlist shipped with VictoriaMetrics does not contain all of them, and the missing metrics have to be enabled manually.
+
+:::warning
+If these metrics are missing, the Cost Management Agent cannot build Pod allocations. The cost details and usage statistics will contain no Pod-level data at all, while project quota billing still works. Complete this configuration before installing the Cost Management Agent.
+:::
+
+### Prerequisites
+
+- The monitoring component of the metered cluster is **ACP Monitor with VictoriaMetrics**, and the Alauda Container Platform version is earlier than 4.4.0.
+- You can access the `global` cluster with a user who is allowed to update the `ModuleInfo` resources.
+
+### Procedure
+
+Perform the following steps on the `global` cluster, once for each metered cluster whose monitoring component is VictoriaMetrics.
+
+1. Locate the VictoriaMetrics ModuleInfo of the metered cluster:
+
+    ```shell
+    kubectl get moduleinfo -l cpaas.io/module-name=victoriametrics,cpaas.io/cluster-name=<cluster-name>
+    ```
+
+2. Add the missing metrics to `spec.valuesOverride`:
+
+    ```shell
+    kubectl patch moduleinfo <moduleinfo-name> --type=merge -p '{
+      "spec": {
+        "valuesOverride": {
+          "ait/chart-victoriametrics": {
+            "exporter-kube-state": {
+              "additionalKeepMetrics": [
+                "kube_namespace_annotations",
+                "kube_node_labels",
+                "kube_persistentvolume_capacity_bytes",
+                "kube_persistentvolumeclaim_info",
+                "kube_persistentvolumeclaim_resource_requests_storage_bytes",
+                "kube_pod_annotations",
+                "kube_pod_container_status_running",
+                "kube_pod_owner"
+              ]
+            }
+          }
+        }
+      }
+    }'
+    ```
+
+    `additionalKeepMetrics` is merged with the built-in allowlist, and applies both to the metrics exposed by kube-state-metrics and to the metrics kept when they are scraped. Do not patch the rendered `Deployment` or `VMServiceScrape` objects directly: such a change is recorded as a `ResourcePatch` and replayed on every subsequent chart deployment, and patching only one of the two places has no effect.
+
+3. Wait about 2 minutes for the plugin to converge, and confirm that all releases are ready:
+
+    ```shell
+    kubectl get moduleinfo <moduleinfo-name> -o jsonpath='{range .status.appReleases[*]}{.name}{"="}{.ready}{" "}{end}'
+    ```
+
+### Verification
+
+1. On the metered cluster, confirm that kube-state-metrics exposes the metrics:
+
+    ```shell
+    kubectl -n cpaas-system get deploy kube-prometheus-exporter-kube-state \
+      -o jsonpath='{.spec.template.spec.containers[0].command}' | tr ',' '\n' | grep metric-allowlist
+    ```
+
+2. On the metered cluster, confirm that the metrics are kept when they are scraped:
+
+    ```shell
+    kubectl -n cpaas-system get vmservicescrape kube-prometheus-exporter-kube-state \
+      -o jsonpath='{.spec.endpoints[0].metricRelabelConfigs[0].regex}' | tr '|' '\n' | grep kube_pod_owner
+    ```
+
+The eight metrics listed above must appear in the output of both commands. After they are collected, the Cost Management Agent starts producing Pod-level metering data from the next collection cycle.
