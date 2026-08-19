@@ -7,6 +7,23 @@ i18n:
 
 # Release Notes
 
+## 4.2.0
+
+### Features and Enhancements
+
+#### VictoriaMetrics as the monitoring component
+
+Metering and billing now works with both **ACP Monitor with Prometheus** and **ACP Monitor with VictoriaMetrics** on the metered cluster.
+
+VictoriaMetrics works out of the box on Alauda Container Platform 4.4.0 and later. On earlier versions, the metrics required by the Cost Management Agent are not all collected by default and have to be enabled manually, otherwise no Pod-level metering data is produced. Refer to [Installation](./installation.mdx#enable-vm-metrics).
+
+### Fixed Issues
+
+- On clusters monitored by VictoriaMetrics, metering and billing produced no Pod-level data at all, because the metrics the Cost Management Agent depends on were missing from the kube-state-metrics allowlist. Cost details and usage statistics were empty while project quota billing still worked.
+- The Cost Statistics and Cost Details pages could render blank, so the billing data could not be viewed.
+- Queries were slow on large clusters. With 10,000 Pods under 10 concurrent requests, the p95 was 5 seconds on the usage statistics page and 49 seconds on the cost details page.
+- The Cost Management Server kept a stale copy of the ClickHouse credentials, so it failed to authenticate after the ClickHouse password was changed.
+
 ## 4.0.0
 
 ### Features and Enhancements
