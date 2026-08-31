@@ -1,188 +1,231 @@
 ---
-weight : 20
+weight: 10
 ---
 
-# How to Define a pGPU Cost Model
+# How to Define a Whole GPU Cost Model
 
-## Prerequisites
+This procedure registers NVIDIA whole-GPU allocation and project-quota usage as billing items. It does not measure GPU utilization percentage.
 
-In the GPU cluster:
-- **Alauda Build of NVIDIA GPU Device Plugin installed**
-- **The Cost Management Agent installed**
+## What this configuration provides
 
-## About Alauda Build of NVIDIA GPU Device Plugin
+- **Allocation**: one allocated GPU UUID is counted as one GPU, then accumulated as GPU-hours.
+- **Project quota (optional)**: the project's `requests.nvidia.com/gpu` hard quota can be accumulated as GPU-hours when project-quota billing is required.
+- **Model pricing**: allocation records retain `modelName`, so different GPU models can have different prices.
+- **Project-quota pricing**: quota records do not contain a GPU model, so use one project-level base price.
 
-The NVIDIA device plugin for Kubernetes is a Daemonset that allows you to automatically:
+## 1. Create the recording rule
 
-- Expose the number of GPUs on each nodes of your cluster
-- Keep track of the health of your GPUs
-- Run GPU enabled containers in your Kubernetes cluster.
+:::info
+**Where to apply this configuration**
 
-<ExternalSite name="pgpu" />
-
-## Procedure
-
-### Create PrometheusRule for generate needed metrics
-
-Create a PrometheusRule in the GPU cluster.
+Before applying it, confirm that the GPU exporter target is healthy and that its source metric has `UUID`, `modelName`, and `namespace` labels.
+:::
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  name: alauda-gpu-billing-recording
+  namespace: kube-system
   labels:
     prometheus: kube-prometheus
-  name: pgpu-labels
-  namespace: kube-system
 spec:
   groups:
-  - name: gpu.rules
-    interval: 30s
-    rules:
-    - record: gpu_count
-      expr: |
-        count by (UUID, label_modelName, namespace) (
-          label_replace(
-            DCGM_FI_DEV_GPU_UTIL{namespace!="kube-system"},
-            "label_modelName",
-            "$0",
-            "modelName",
-            ".*"
-          )
-        )
+    - name: alauda.billing.gpu
+      interval: 30s
+      rules:
+        - record: alauda_gpu_allocated_count
+          expr: |
+            count by (UUID, label_modelName, namespace) (
+              label_replace(
+                DCGM_FI_DEV_GPU_UTIL{
+                  namespace!="kube-system",
+                  pod!~"nvidia-dcgm-exporter.*",
+                  container!="nvidia-dcgm-exporter"
+                },
+                "label_modelName",
+                "$0",
+                "modelName",
+                ".*"
+              )
+            )
+        - record: alauda_gpu_project_quota_count
+          expr: |
+            avg by (project, cluster) (
+              avg_over_time(
+                cpaas_project_resourcequota{
+                  resource="requests.nvidia.com/gpu",
+                  type="project-hard"
+                }[5m]
+              )
+            )
 ```
 
-## Add Collection Config (Cost Management Agent)
+The first rule emits one value-1 series for each allocated GPU UUID. The second rule emits the project's GPU quota. The second rule is optional: remove it and the matching project-quota collection and display entries when project-quota billing is not required. Replace the source expressions if the exporter or quota metric has different names in your environment.
 
-Create a ConfigMap in the GPU cluster where the Cost Management Agent runs to declare what to collect.
+Verify the rules in Prometheus:
+
+```text
+alauda_gpu_allocated_count
+alauda_gpu_project_quota_count
+```
+
+Both queries must return the expected non-empty series before continuing.
+
+Confirm that the GPU exporter target is healthy in the active Prometheus instance before troubleshooting the recording rule.
+
+## 2. Create the collection configuration
+
+:::info
+**Where to apply this configuration**
+
+Apply this `ConfigMap` in the GPU cluster where the Cost Management Agent runs.
+:::
 
 ```yaml
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slark-agent-gpu-config
+  namespace: cpaas-system
+  labels:
+    cpaas.io/slark.collection.config: "true"
 data:
-  config: >
-    - kind: pGPU
-      category: pGPUCount
-      item: vGPUCountQuota
+  config: |
+    - kind: GPU
+      category: GPU
+      item: gpuAllocationHours
       period: Hourly
-      labels:
-        query: "gpu_count"
-        mappers:
-          name: UUID
-          namespace: namespace
-          cluster: ""
-          project: ""
       usage:
-        query: gpu_count
+        query: alauda_gpu_allocated_count
         step: 5m
         mappers:
           name: UUID
           namespace: namespace
           cluster: ""
           project: ""
-kind: ConfigMap
-metadata:
-  labels:
-    cpaas.io/slark.collection.config: "true"
-  name: slark-agent-pgpu-namespace-config
-  namespace: cpaas-system
----
-apiVersion: v1
-data:
-  config: >
+      labels:
+        query: alauda_gpu_allocated_count
+        mappers:
+          name: UUID
+          namespace: namespace
+          cluster: ""
+          project: ""
     - kind: Project
-      category: pGPUCount
-      item: vGPUCountsProjectQuota
+      category: GPU
+      item: projectGPUQuotaHours
       period: Hourly
       usage:
-        query: avg by (project, cluster) (avg_over_time(cpaas_project_resourcequota{resource="requests.nvidia.com/gpu", type="project-hard"}[5m]))
+        query: alauda_gpu_project_quota_count
         step: 5m
         mappers:
           name: project
           namespace: ""
           cluster: cluster
           project: project
-kind: ConfigMap
-metadata:
-  labels:
-    cpaas.io/slark.collection.config: "true"
-  name: slark-agent-project-config-pgpu
-  namespace: cpaas-system
 ```
 
-After adding the yaml , you need to restart the Agent Pod to reload the configurations.
+The `label_` prefix is required in the Prometheus label source. Cost Management stores `label_modelName` as the billing label `modelName`.
+
+After applying the ConfigMap, reload the Cost Management Agent so it reads the new collection configuration:
 
 ```bash
-kubectl delete pods -n cpaas-system -l service_name=slark-agent
+kubectl -n cpaas-system delete pod \
+  -l service_name=slark-agent
 ```
 
-## Add Display/Storage Config (Cost Management Server)
+## 3. Create the display configuration
 
-Create a ConfigMap in the cluster where the Cost Management Server runs to declare billing items, methods, units, and display names. This tells the server what and how to bill.
+:::info
+**Where to apply this configuration**
+
+Apply this `ConfigMap` in the Global cluster where the Cost Management Server runs.
+:::
 
 ```yaml
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slark-display-config-for-gpu
+  namespace: kube-public
+  labels:
+    cpaas.io/slark.display.config: "true"
 data:
   config: |
-    - name: pGPUCount
+    - name: GPU
       displayname:
-        zh: "pGPU"
-        en: "pGPU"
+        zh: "整卡 GPU"
+        en: "Whole GPU"
       methods:
-        - name: Request
+        - name: Allocation
           displayname:
-            zh: "请求量"
-            en: "Request Usage"
-          item: vGPUCountQuota
+            zh: "分配量"
+            en: "Allocation Usage"
+          item: gpuAllocationHours
           divisor: 1
           unit:
-            zh: "count-hours"
-            en: "count-hours"
+            zh: "卡时"
+            en: "GPU-hours"
         - name: ProjectQuota
           displayname:
             zh: "项目配额"
             en: "Project Quota"
-          item: vGPUCountsProjectQuota
-          unit:
-            zh: "count-hours"
-            en: "count-hours"
+          item: projectGPUQuotaHours
           divisor: 1
-kind: ConfigMap
-metadata:
-  labels:
-    cpaas.io/slark.display.config: "true"
-  name: slark-display-config-for-pgpu
-  namespace: kube-public
+          unit:
+            zh: "卡时"
+            en: "GPU-hours"
 ```
 
-After adding the yaml , you need to restart the Server Pod to reload the configurations.
+After applying the ConfigMap, reload the Cost Management Server so it reads the new display configuration:
 
 ```bash
-kubectl delete pods -n cpaas-system -l service_name=slark-server
+kubectl -n cpaas-system delete pod \
+  -l service_name=slark-server
 ```
 
-## Add Price For a pGPU Cost Model
+## 4. Add prices to the cost model
 
-### Billing Method Description
+In the platform console, open **Metering and Billing > Cost Models** and create or edit the cost model linked to the GPU cluster.
 
-| Billing Item        | Billing Method             | Billing Rules                                                                                                             | Description                                                 |
-|---------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
-| **pGPU**            | Request (Count-hours)       | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on pGPU resource requests |
-| **pGPU**            | Project Quota (Count-hours) | Calculated on an hourly basis using the project's allocated CPU quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+Add the following billing items:
 
+| Billing item | Method | Unit | Price rule |
+| --- | --- | --- | --- |
+| Whole GPU | Allocation Usage | GPU-hours | Default price, with optional `modelName` overrides |
+| Whole GPU | Project Quota | GPU-hours | Project-level default price |
 
-If the GPU cluster does not have a Cost model, you need to create a new cost model.
-Then you can add price for the cost model of the GPU cluster:
+:::warning
+Project Quota is optional. Add this method only when project-quota billing is required. Project Quota data has no GPU model dimension, so do not configure `modelName` price overrides for this method.
+:::
 
-1. Select `pGPU`in **Billing Items**.
-2. Select `Request Usage (count-hours)` or `Project Quota (count-hours)` in **Method**.
-3. Set **Default Price**.
-4. Config **Price By Label** (optional).
-  Example:
-    **key**: modelName
-    **value**: "Tesla P100-PCIE-16GB" or "Tesla T4" or "NVIDIA A30"(Got it by run `nvidia-smi`)
+For model-specific allocation prices, add a label override:
 
+```text
+Key: modelName
+Value: <the exact value reported by the GPU exporter>
+Price: <price per GPU-hour>
+```
 
-### Cost Details and Cost Statistics
+The label value is case-sensitive. Confirm it with:
 
-Finally, after waiting for 1 or more hours, you can see the cost details in the **Cost Details** with namespace and card uuid dimensions.
-And you can see the total costs based on cluster, project, and namespace in the **Cost Statistics**.
+```text
+count by (UUID, label_modelName) (alauda_gpu_allocated_count)
+```
+
+## 5. Verify the result
+
+Wait for at least one hourly billing window and allow the collection and billing processes to finish. Verify the result in this order:
+
+1. **Usage**: confirm that the GPU usage record exists for the expected cluster, namespace, and GPU UUID.
+2. **Bill**: confirm that a bill is generated from that usage record and that the expected price is applied.
+3. **Console**: confirm that the same item and amount appear in cost details and statistics.
+
+Confirm that:
+
+- `Allocation Usage` contains the allocated GPU UUID and, when available, `modelName`;
+- `Project Quota` contains the project and cluster dimensions;
+- the expected model-specific price is applied to allocation records;
+- project-quota records use the project-level base price.
+
+For common issues, see [FAQ](./faq).
