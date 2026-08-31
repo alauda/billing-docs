@@ -4,4 +4,21 @@ weight: 30
 
 # How to Define a GPU Cost Model
 
-<Overview overviewHeaders={[]} />
+This section provides configuration for metering and billing whole GPUs, whole NPUs, and HAMi virtual GPUs in a cluster.
+
+Each resource configuration supports two billing methods:
+
+| Method | What is measured | Use this when |
+| --- | --- | --- |
+| Allocation | Allocated whole GPUs over time (GPU-hours) | You charge for GPUs assigned to workloads |
+| Project quota | GPU quota assigned to a project over time (GPU-hours) | You charge for a project's reserved quota |
+
+Allocation prices can be differentiated by GPU model with the `modelName` label. Project quota uses a project-level base price because quota data has no GPU model dimension. A default price is used when no model-specific allocation price matches.
+
+## Configure GPU billing
+
+1. [How to Define a Whole GPU Cost Model](./pgpu_cost_model)
+2. [How to Define a Whole NPU Cost Model](./npu_cost_model)
+3. [How to Define a HAMi Virtual GPU Cost Model](./vgpu_cost_model)
+4. [Configuration Conventions](./conventions)
+5. [Check the result and troubleshoot common issues](./faq)

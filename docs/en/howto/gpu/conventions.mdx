@@ -1,0 +1,30 @@
+---
+weight: 70
+---
+
+# Configuration Conventions
+
+The GPU, NPU, and HAMi virtual-device examples in this section follow these conventions. Check the values below before applying a sample to another cluster.
+
+## Where to apply each object
+
+| Object | Cluster and namespace |
+| --- | --- |
+| `PrometheusRule` | Accelerator cluster, usually `kube-system` |
+| Collection `ConfigMap` | Accelerator cluster, `cpaas-system` |
+| Display `ConfigMap` | Global/Cost Management Server cluster, `kube-public` |
+| Cost Model prices | Platform console for the linked accelerator cluster |
+
+## Configuration values
+
+- Verify the source metric names, labels, resource keys, and units in the target environment before applying a sample.
+- Keep `category` and `item` values consistent between the collection and display configurations.
+- Use the exact billing label name and value when configuring Price By Label. Label matching is case-sensitive.
+- The `prometheus` selector and rule namespace must match the active monitoring instance.
+
+## Units and refresh time
+
+- Each resource page defines the unit for its billing method. Do not change a divisor without checking the source unit.
+- The sample collection step is five minutes; usage and bills are not real-time.
+- Allow the collection and billing workers to process samples before checking the console.
+- Changing a Cost Model price applies to subsequently processed data and does not automatically rewrite historical bills.
