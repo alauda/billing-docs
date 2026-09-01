@@ -1,0 +1,44 @@
+---
+weight: 99
+---
+
+# FAQ
+
+The checks below apply to GPU, NPU, and HAMi configurations. Where an example uses a GPU metric or item, substitute the normalized metric and item from the corresponding resource page.
+
+## Why is no accelerator usage shown?
+
+For the resource page you configured, check the following in order:
+
+1. The source exporter or HAMi scheduler metric returns the labels required by the selected resource page.
+2. The normalized allocation metric returns data in Prometheus (`alauda_gpu_allocated_count`, `alauda_npu_allocated_count`, or `alauda_hami_virtual_memory_allocated_bytes`).
+3. The collection `ConfigMap` is in `cpaas-system` on the accelerator cluster and has the `cpaas.io/slark.collection.config: "true"` label.
+4. The collection item and query match the recording rule for the selected resource page.
+5. The agent has reloaded the configuration and enough time has passed for a collection cycle.
+
+## Why is there usage but no bill?
+
+Check that the Cost Model is linked to the GPU cluster and contains a price for the exact billing item and method. Confirm that the display `ConfigMap` item names match the collection items exactly.
+
+## Why are all records using the default price?
+
+The model-specific override matches the billing label `modelName`. Confirm that:
+
+- the recording rule creates `label_modelName`;
+- the value is copied into the billing record as `modelName`;
+- the Cost Model key is exactly `modelName`;
+- the value matches case-sensitively.
+
+Project-quota records use the default project price because the quota metric has no GPU model dimension.
+
+## Why is the displayed data delayed?
+
+The sample configuration evaluates usage every five minutes and aggregates it hourly. Allow at least one collection interval and the billing processing time before checking the console.
+
+## Why did changing the price not change old bills?
+
+Cost Model changes do not automatically recalculate historical bills. Treat the new price as applying to subsequently processed data unless a separate, bounded recalculation procedure is performed.
+
+## Can `DCGM_FI_DEV_GPU_UTIL` be billed directly?
+
+No. Its numeric value is a utilization percentage, not a GPU count. The sample uses the existence of labelled GPU series to derive one allocated GPU per UUID.

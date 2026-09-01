@@ -1,188 +1,198 @@
 ---
-weight : 20
+weight: 20
 ---
 
-# How to Define an NPU Cost Model
+# How to Define a Whole NPU Cost Model
 
-## Prerequisites
+This procedure registers Ascend whole-NPU allocation and, optionally, project NPU quota as billing items. It measures allocated devices, not AI-core, HBM, or runtime utilization.
 
-In the NPU cluster:
-- **The Alauda Build of NPU Operator is installed**
-- **The Cost Management Agent installed**
-- **ACP v4.2+**
+## What this configuration provides
 
-## About Alauda Build of NPU Operator
+- **Allocation**: one assigned NPU device contributes one NPU-hour.
+- **Project quota (optional)**: the project's hard NPU quota can be accumulated as NPU-hours.
+- **Model pricing**: allocation records retain the NPU model, so different models can have different prices.
+- **Project-quota pricing**: quota records have no device or model dimension, so use one project-level base price.
 
-Refer to <ExternalSiteLink name="acp" href="hardware_accelerator/npu/npu_operator/installation.html" children="Installing Alauda Build of NPU Operator" /> 
+## 1. Create the recording rule
 
-<ExternalSite name="acp" />
+:::info
+**Where to apply this configuration**
 
-## Procedure
-
-### Create PrometheusRule to generate needed metrics
-
-Create a PrometheusRule in the NPU cluster.
-
-The `npu_count` metric is required for NPU metering and billing.
+Apply this `PrometheusRule` in the cluster that contains the NPUs and `npu-exporter`. Before applying it, confirm that the exporter target is healthy and that `npu_chip_info_name` has `vdie_id`, `name`, and namespace labels.
+:::
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  name: alauda-npu-billing-recording
+  namespace: kube-system
   labels:
     prometheus: kube-prometheus
-  name: npu-labels
-  namespace: kube-system
 spec:
   groups:
-  - name: npu.rules
-    interval: 30s
-    rules:
-    - record: npu_count
-      expr: |
-        count by (vdie_id, label_modelName, exported_namespace) (
-          label_replace(
-            npu_container_info{exported_namespace!="kube-system"},
-            "label_modelName",
-            "$0",
-            "model_name",
-            ".*"
-          )
-        )
+    - name: alauda.billing.npu
+      interval: 30s
+      rules:
+        - record: alauda_npu_allocated_count
+          expr: |
+            count by (UUID, label_modelName, namespace) (
+              label_replace(
+                label_replace(
+                  npu_chip_info_name{namespace!="", namespace!="kube-system"},
+                  "UUID", "$1", "vdie_id", "(.+)"
+                ),
+                "label_modelName", "$1", "name", "(.+)"
+              )
+            )
+        - record: alauda_npu_project_quota_count
+          expr: |
+            avg by (project, cluster) (
+              avg_over_time(
+                cpaas_project_resourcequota{
+                  resource="requests.huawei.com/Ascend910",
+                  type="project-hard"
+                }[5m]
+              )
+            )
 ```
 
-## Add Collection Config (Cost Management Agent)
+:::warning
+The `requests.huawei.com/Ascend910` value is only an example. Replace it with the exact NPU resource key exposed by the target cluster, including the actual accelerator model or model suffix. Check the `resource` label of `cpaas_project_resourcequota` in Prometheus before applying the rule. If the key does not match, the project-quota metric remains empty and no ProjectQuota usage is collected.
+:::
 
-Create ConfigMaps in the NPU cluster where the Cost Management Agent runs to declare what to collect.
+The project-quota rule is optional. Remove it when project-quota billing is not required.
+
+Verify the normalized metrics in Prometheus:
+
+```text
+alauda_npu_allocated_count
+alauda_npu_project_quota_count
+```
+
+Both the exporter target and the required normalized query must be healthy before continuing.
+
+## 2. Create the collection configuration
+
+:::info
+**Where to apply this configuration**
+
+Apply this `ConfigMap` in the NPU cluster where the Cost Management Agent runs.
+:::
 
 ```yaml
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slark-agent-npu-config
+  namespace: cpaas-system
+  labels:
+    cpaas.io/slark.collection.config: "true"
 data:
   config: |
     - kind: NPU
-      category: NPUCount
-      item: NPUCountQuota
+      category: NPU
+      item: npuAllocationHours
       period: Hourly
-      labels:
-        query: "npu_count"
-        mappers:
-          name: vdie_id
-          namespace: exported_namespace
-          cluster: ""
-          project: ""
       usage:
-        query: npu_count
+        query: alauda_npu_allocated_count
         step: 5m
         mappers:
-          name: vdie_id
-          namespace: exported_namespace
+          name: UUID
+          namespace: namespace
           cluster: ""
           project: ""
-kind: ConfigMap
-metadata:
-  labels:
-    cpaas.io/slark.collection.config: "true"
-  name: slark-agent-npu-namespace-config
-  namespace: cpaas-system
----
-apiVersion: v1
-data:
-  config: |
+      labels:
+        query: alauda_npu_allocated_count
+        mappers:
+          name: UUID
+          namespace: namespace
+          cluster: ""
+          project: ""
     - kind: Project
-      category: NPUCount
-      item: NPUCountsProjectQuota
+      category: NPU
+      item: projectNPUQuotaHours
       period: Hourly
       usage:
-        query: avg by (project, cluster) (avg_over_time(cpaas_project_resourcequota{resource="requests.huawei.com/Ascend910", type="project-hard"}[5m]))
+        query: alauda_npu_project_quota_count
         step: 5m
         mappers:
           name: project
           namespace: ""
           cluster: cluster
           project: project
-kind: ConfigMap
-metadata:
-  labels:
-    cpaas.io/slark.collection.config: "true"
-  name: slark-agent-project-config-npu
-  namespace: cpaas-system
 ```
 
-After adding the yaml , you need to restart the Agent Pod to reload the configurations.
+The `label_` prefix is required in the Prometheus label source. Cost Management stores `label_modelName` as the billing label `modelName`.
+
+After applying the ConfigMap, reload the Cost Management Agent:
 
 ```bash
-kubectl delete pods -n cpaas-system -l service_name=slark-agent
+kubectl -n cpaas-system delete pod -l service_name=slark-agent
 ```
 
-## Add Display/Storage Config (Cost Management Server)
+## 3. Create the display configuration
 
-Create a ConfigMap in the cluster where the Cost Management Server runs to declare billing items, methods, units, and display names. This tells the server what and how to bill.
+:::info
+**Where to apply this configuration**
+
+Apply this `ConfigMap` in the Global cluster where the Cost Management Server runs.
+:::
 
 ```yaml
 apiVersion: v1
-data:
-  config: |
-    - name: NPUCount
-      displayname:
-        zh: "NPU"
-        en: "NPU"
-      methods:
-        - name: Request
-          displayname:
-            zh: "请求量"
-            en: "Request Usage"
-          item: NPUCountQuota
-          divisor: 1
-          unit:
-            zh: "count-hours"
-            en: "count-hours"
-        - name: ProjectQuota
-          displayname:
-            zh: "项目配额"
-            en: "Project Quota"
-          item: NPUCountsProjectQuota
-          unit:
-            zh: "count-hours"
-            en: "count-hours"
-          divisor: 1
 kind: ConfigMap
 metadata:
-  labels:
-    cpaas.io/slark.display.config: "true"
   name: slark-display-config-for-npu
   namespace: kube-public
+  labels:
+    cpaas.io/slark.display.config: "true"
+data:
+  config: |
+    - name: NPU
+      displayname:
+        zh: "整卡 NPU"
+        en: "Whole NPU"
+      methods:
+        - name: Allocation
+          displayname: {zh: "分配量", en: "Allocation Usage"}
+          item: npuAllocationHours
+          divisor: 1
+          unit: {zh: "卡时", en: "NPU-hours"}
+        - name: ProjectQuota
+          displayname: {zh: "项目配额", en: "Project Quota"}
+          item: projectNPUQuotaHours
+          divisor: 1
+          unit: {zh: "卡时", en: "NPU-hours"}
 ```
 
-After adding the yaml , you need to restart the Server Pod to reload the configurations.
+After applying the ConfigMap, reload the Cost Management Server:
 
 ```bash
-kubectl delete pods -n cpaas-system -l service_name=slark-server
+kubectl -n cpaas-system delete pod -l service_name=slark-server
 ```
 
-## Add Price For an NPU Cost Model
+## 4. Add prices to the cost model
 
-### Billing Method Description
+In the platform console, open **Metering and Billing > Cost Models** and create or edit the cost model linked to the NPU cluster.
 
-| Billing Item | Billing Method | Billing Rules | Description |
-|--------------|----------------|---------------|-------------|
-| **NPU** | Request (Count-hours) | Calculated on an hourly basis using the `npu_count` metric over the past hour, multiplied by the actual duration of the NPU allocation. | Based on NPU device usage |
-| **NPU** | Project Quota (Count-hours) | Calculated on an hourly basis using the project's allocated NPU quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+| Billing item | Method | Unit | Price rule |
+| --- | --- | --- | --- |
+| Whole NPU | Allocation Usage | NPU-hours | Default price, with optional `modelName` overrides |
+| Whole NPU | Project Quota | NPU-hours | Project-level default price |
 
-If the NPU cluster does not have a Cost model, you need to create a new cost model.
-Then you can add price for the cost model of the NPU cluster:
+:::warning
+Project Quota is optional and has no NPU model dimension. Do not configure `modelName` price overrides for this method.
+:::
 
-1. Associate the target NPU cluster with the cost model.
-2. Select `NPU`in **Billing Items**.
-3. Select `Request Usage (count-hours)` or `Project Quota (count-hours)` in **Method**.
-4. Set **Default Price**.
-5. Configure **Price By Label** (optional).
-   Example:
-     **key**: modelName
-     **value**: `910B4-Ascend-V1`
+For model-specific allocation prices, use the exact value from the exporter as a `modelName` label override. The value is case-sensitive.
 
-## Cost Details and Cost Statistics
+## 5. Verify the result
 
-Finally, after waiting for 1 or more hours, you can see the cost details in the **Cost Details** with namespace and card uuid dimensions.
-And you can see the total costs based on cluster, project, and namespace in the **Cost Statistics**.
+Wait for at least one hourly billing window. Verify the result in this order:
 
-Billing data is generated in the next billing cycle after the usage data is collected, so it may appear several minutes after the hour boundary.
+1. **Usage**: confirm an NPU usage record exists with the expected cluster, namespace, UUID, and model label.
+2. **Bill**: confirm a bill is generated and the expected default or model-specific price is applied.
+3. **Console**: confirm the item and amount appear in cost details and statistics.
+
+For shared deployment rules, see [Configuration Conventions](./conventions).
