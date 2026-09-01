@@ -1,312 +1,200 @@
 ---
-weight : 10
+weight: 30
 ---
 
-# How to Define a vGPU(Hami) Cost Model
+# How to Define a HAMi Virtual GPU Cost Model
 
-## Prerequisites
+This procedure registers HAMi virtual-device memory allocation as a billing item. The metric is unified at the HAMi scheduler layer and applies to both soft-slice and hard-slice workloads.
 
-In the GPU cluster:
-- **Alauda Build of Hami installed**
-- **The Cost Management Agent installed**
+## What this configuration provides
 
-## About Alauda Build of Hami
+- **Memory allocation**: scheduler-confirmed virtual memory allocation, accumulated as GiB-hours.
+- **Project quota (optional)**: project virtual-memory quota, accumulated as GiB-hours.
+- **Model pricing**: allocation records retain `modelName`, so prices can vary by backing accelerator model.
+- **Runtime metrics**: WebUI or device-plugin usage metrics may be used for monitoring, but are not the default billing fact.
 
-Heterogeneous AI Computing Virtualization Middleware (HAMi), formerly known as k8s-vGPU-scheduler, is an "all-in-one" chart designed to manage Heterogeneous AI Computing Devices in a k8s cluster. It can provide the ability to share Heterogeneous AI devices among tasks.
+## 1. Create the recording rule
 
-<ExternalSite name="hami" />
+:::info
+**Where to apply this configuration**
 
-## Procedure
-
-### Create PrometheusRule for generate needed metrics
-
-Create a PrometheusRule in the Hami cluster.
+Apply this `PrometheusRule` in the cluster that runs HAMi and its scheduler metrics. Confirm that the scheduler exporter target is healthy before applying it.
+:::
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  name: alauda-hami-billing-recording
+  namespace: kube-system
   labels:
     prometheus: kube-prometheus
-  name: hami-gpu-labels
-  namespace: kube-system
 spec:
   groups:
-    - name: hami-gpu-labels.rules
+    - name: alauda.billing.hami
+      interval: 30s
       rules:
-        - expr: |
-            min by (podnamespace, deviceuuid, label_modelName, label_device) (
-              vGPUCorePercentage
-              * on (deviceuuid) group_left(label_modelName, label_device) (
-                label_replace(
-                  label_replace(
-                    label_replace(
-                      DCGM_FI_DEV_SM_CLOCK,
-                      "deviceuuid", "$1", "UUID", "(.*)"
-                    ),
-                    "label_modelName", "$1", "modelName", "(.*)"
-                  ),
-                  "label_device", "$1", "device", "([a-zA-Z]+)[0-9]+$"
-                )
-              )
+        - record: alauda_hami_virtual_memory_allocated_bytes
+          expr: |
+            label_replace(
+              label_join(
+                (
+                  hami_vgpu_memory_allocated_bytes{namespace!="kube-system"}
+                  * on (device_uuid) group_left (device_type)
+                    (0 * max by (device_uuid, device_type) (hami_gpu_memory_limit_bytes) + 1)
+                ),
+                "virtual_device_id", "/", "device_uuid", "namespace", "pod", "container_index"
+              ),
+              "label_modelName", "$1", "device_type", "(.+)"
             )
-          record: vgpu_core_labels
+        - record: alauda_hami_project_memory_quota_bytes
+          expr: |
+            avg by (project, cluster) (
+              avg_over_time(
+                cpaas_project_resourcequota{
+                  resource="requests.nvidia.com/gpumem",
+                  type="project-hard"
+                }[5m]
+              ) * 1048576
+            )
 ```
 
-## Add Collection Config (Cost Management Agent)
+`hami_vgpu_memory_allocated_bytes` is the scheduler allocation fact. It is not the runtime memory currently used by a container. The rule creates a unique `virtual_device_id` for each device, namespace, pod, and container allocation.
 
-Create some ConfigMap in the Hami cluster where the Cost Management Agent runs to declare what to collect.
+:::warning
+The `resource="requests.nvidia.com/gpumem"` selector is only an example. For example, an HAMi Ascend 310P environment may expose NPU memory as `requests.huawei.com/Ascend310P-memory`. HAMi NPU memory resources are often model-specific. Replace the selector with the exact memory-resource key exposed by the target environment, including the accelerator model when applicable. Check the `resource` label and unit of `cpaas_project_resourcequota` in Prometheus before applying the rule. If the resource key or unit is different, update the selector and the MiB-to-bytes conversion accordingly; otherwise ProjectQuota data may be empty or incorrectly scaled.
+:::
 
-Note: The configmap of project quota is only supported in hami 2.7+
+The project-quota rule is optional. Remove it when project-quota billing is not required.
+
+Verify the normalized metrics in Prometheus:
+
+```text
+alauda_hami_virtual_memory_allocated_bytes
+alauda_hami_project_memory_quota_bytes
+```
+
+The allocation metric must return the expected series for both soft-slice and hard-slice workloads before continuing.
+
+## 2. Create the collection configuration
+
+:::info
+**Where to apply this configuration**
+
+Apply this `ConfigMap` in the HAMi cluster where the Cost Management Agent runs.
+:::
 
 ```yaml
 apiVersion: v1
-data:
-  config: >
-    - kind: vGPU
-      category: vGPUCore
-      item: vGPUCoreQuota
-      period: Hourly
-      labels:
-        query: "vgpu_core_labels{}"
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
-      usage:
-        query: sum by (deviceuuid,podnamespace) (avg_over_time(vGPUCorePercentage{}[5m]))
-        step: 5m
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
-    - kind: vGPU
-      category: vGPUMemory
-      item: vGPURamBytesQuota
-      period: Hourly
-      labels:
-        query: "vgpu_core_labels{}"
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
-      usage:
-        query: sum by (deviceuuid,podnamespace) (avg_over_time(vGPU_device_memory_limit_in_bytes{}[5m]))
-        step: 5m
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
-    - kind: vGPU
-      category: vGPUCore
-      item: vGPUCoreUsed
-      period: Hourly
-      labels:
-        query: "vgpu_core_labels{}"
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
-      usage:
-        query: sum by (deviceuuid,podnamespace) (avg_over_time(Device_utilization_desc_of_container{}[5m]))
-        step: 5m
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
-    - kind: vGPU
-      category: vGPUMemory
-      item: vGPURamBytesUsed
-      period: Hourly
-      labels:
-        query: "vgpu_core_labels{}"
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
-      usage:
-        query: sum by (deviceuuid,podnamespace) (avg_over_time(vGPU_device_memory_usage_in_bytes{}[5m]))
-        step: 5m
-        mappers:
-          name: deviceuuid
-          namespace: podnamespace
-          cluster: ""
-          project: ""
 kind: ConfigMap
 metadata:
+  name: slark-agent-hami-config
+  namespace: cpaas-system
   labels:
     cpaas.io/slark.collection.config: "true"
-  name: slark-agent-vgpu-namespace-config
-  namespace: cpaas-system
----
-# Note: The following configmap is only supported in hami 2.7+
-apiVersion: v1
-data:
-  config: >
-    - kind: Project
-      category: vGPUCore
-      item: vGPUCoresProjectQuota
-      period: Hourly
-      usage:
-        query: avg by (project, cluster) (avg_over_time(cpaas_project_resourcequota{resource="limits.nvidia.com/gpucores", type="project-hard"}[5m]))
-        step: 5m
-        mappers:
-          name: project
-          namespace: ""
-          cluster: cluster
-          project: project
-    - kind: Project
-      category: vGPUMemory
-      item: vGPURamBytesProjectQuota
-      period: Hourly
-      usage:
-        query: avg by (project, cluster) (avg_over_time(cpaas_project_resourcequota{resource="limits.nvidia.com/gpumem", type="project-hard"}[5m]))
-        step: 5m
-        mappers:
-          name: project
-          namespace: ""
-          cluster: cluster
-          project: project
-kind: ConfigMap
-metadata:
-  labels:
-    cpaas.io/slark.collection.config: "true"
-  name: slark-agent-project-config-vgpu
-  namespace: cpaas-system
-```
-
-After adding the yaml , you need to restart the Agent Pod to reload the configurations.
-
-```bash
-kubectl delete pods -n cpaas-system -l service_name=slark-agent
-```
-
-## Add Display/Storage Config (Cost Management Server)
-
-Create a ConfigMap in the cluster where the Cost Management Server runs to declare billing items, methods, units, and display names. This tells the server what and how to bill.
-
-Note:
-It makes no sense to use Request Usage without enabling GPU Overcommitment Ratio. If you use Request Usage, please enable GPU Overcommitment Ratio.
-
-```yaml
-apiVersion: v1
 data:
   config: |
-    - name: vGPUCore
-      displayname:
-        zh: "HAMi NVIDIA vGPU Cores"
-        en: "HAMi NVIDIA vGPU Cores"
-      methods:
-        - name: Request
-          displayname:
-            zh: "请求量"
-            en: "Request Usage"
-          item: vGPUCoreQuota
-          divisor: 1
-          unit:
-            zh: "core-hours"
-            en: "core-hours"
-        - name: Usage
-          displayname:
-            zh: "使用量"
-            en: "Used Usage"
-          item: vGPUCoreUsed
-          divisor: 1
-          unit:
-            zh: "core-hours"
-            en: "core-hours"
-        - name: ProjectQuota
-          displayname:
-            zh: "项目配额"
-            en: "Project Quota"
-          item: vGPUCoresProjectQuota
-          unit:
-            zh: "core-hours"
-            en: "core-hours"
-          divisor: 1
-    - name: vGPUMemory
-      displayname:
-        zh: "HAMi NVIDIA vGPU Memory"
-        en: "HAMi NVIDIA vGPU Memory"
-      methods:
-        - name: Request
-          displayname:
-            zh: "请求量"
-            en: "Request Usage"
-          item: vGPURamBytesQuota
-          divisor: 1073741824
-          unit:
-            zh: "Gi-hours"
-            en: "Gi-hours"
-        - name: Used
-          displayname:
-            zh: "使用量"
-            en: "Used Usage"
-          item: vGPURamBytesUsed
-          divisor: 1073741824
-          unit:
-            zh: "Gi-hours"
-            en: "Gi-hours"
-        - name: ProjectQuota
-          displayname:
-            zh: "项目配额"
-            en: "Project Quota"
-          item: vGPURamBytesProjectQuota
-          unit:
-            zh: "Gi-hours"
-            en: "Gi-hours"
-          divisor: 1024 # Mi/1024
-kind: ConfigMap
-metadata:
-  labels:
-    cpaas.io/slark.display.config: "true"
-  name: slark-display-config-for-vgpu
-  namespace: kube-public
+    - kind: HAMi
+      category: HAMi
+      item: hamiVirtualMemoryAllocationGiBHours
+      period: Hourly
+      usage:
+        query: alauda_hami_virtual_memory_allocated_bytes
+        step: 5m
+        mappers:
+          name: virtual_device_id
+          namespace: namespace
+          cluster: ""
+          project: ""
+      labels:
+        query: alauda_hami_virtual_memory_allocated_bytes
+        mappers:
+          name: virtual_device_id
+          namespace: namespace
+          cluster: ""
+          project: ""
+    - kind: Project
+      category: HAMi
+      item: projectVirtualDeviceMemoryGiBHours
+      period: Hourly
+      usage:
+        query: alauda_hami_project_memory_quota_bytes
+        step: 5m
+        mappers:
+          name: project
+          namespace: ""
+          cluster: cluster
+          project: project
 ```
 
-After adding the yaml , you need to restart the Server Pod to reload the configurations.
+The source value is bytes. Cost Management stores byte-hours and the display divisor converts it to GiB-hours. Reload the Agent after applying the ConfigMap:
 
 ```bash
-kubectl delete pods -n cpaas-system -l service_name=slark-server
+kubectl -n cpaas-system delete pod -l service_name=slark-agent
 ```
 
-## Add Price For a vGPU Cost Model
+## 3. Create the display configuration
 
-If the GPU cluster does not have a Cost model, you need to create a new cost model.
-Then you can add price for the cost model of the GPU cluster:
+:::info
+**Where to apply this configuration**
 
-### Billing Method Description
+Apply this `ConfigMap` in the Global cluster where the Cost Management Server runs.
+:::
 
-| Billing Item        | Billing Method             | Billing Rules                                                                                                             | Description                                                 |
-|---------------------|----------------------------|--------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------|
-| **vGPU**            | Usage (Core-hours)         | Calculated on an hourly basis using the POD's AVG(Usage) over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on actual vGPU consumption |
-| **vGPU**            | Request (Core-hours)       | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on vGPU resource requests |
-| **vGPU**            | Project Quota (Core-hours) | Calculated on an hourly basis using the project's allocated CPU quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
-| **vGPUMemory**      | Usage (GiB-hours)          | Calculated on an hourly basis using the POD's AVG(Usage) over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on actual vGPU memory consumption |
-| **vGPUMemory**      | Request (GiB-hours)        | Calculated on an hourly basis using the POD's Request over the past hour, multiplied by the actual duration of the POD (counted as 5 minutes if less than 5 minutes). | Based on vGPU memory resource requests |
-| **vGPUMemory**      | Project Quota (GiB-hours)  | Calculated on an hourly basis using the project's allocated memory quota limit, multiplied by time duration. Segmented calculation when quota changes. | Based on project-level resource quotas |
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: slark-display-config-for-hami
+  namespace: kube-public
+  labels:
+    cpaas.io/slark.display.config: "true"
+data:
+  config: |
+    - name: HAMi
+      displayname: {zh: "HAMi 虚拟设备", en: "HAMi Virtual Device"}
+      methods:
+        - name: MemoryAllocation
+          displayname: {zh: "显存分配量", en: "Allocated vMemory"}
+          item: hamiVirtualMemoryAllocationGiBHours
+          divisor: 1073741824
+          unit: {zh: "GiB·时", en: "GiB-hours"}
+        - name: ProjectQuota
+          displayname: {zh: "项目显存配额", en: "Project vMemory Quota"}
+          item: projectVirtualDeviceMemoryGiBHours
+          divisor: 1073741824
+          unit: {zh: "GiB·时", en: "GiB-hours"}
+```
 
+`divisor: 1073741824` means 1 GiB (`1024 x 1024 x 1024` bytes). It converts the byte-hours collected by Cost Management into GiB-hours for display and price calculation. Keep the source and collection data in bytes; do not divide the values in Prometheus or in the collection query before they reach the metering system. This preserves precision and keeps the conversion in one place.
 
-### Add Price For a Cost Model
+Reload the Cost Management Server after applying the ConfigMap:
 
-1. Select `vGPU` or `vGPUMemory` in **Billing Items**.
-2. Select `Request Usage (core-hours)` or `Used Usage (core-hours)` or `Project Quota (core-hours)` in **Method**.
-3. Set **Default Price**.
-4. Config **Price By Label** (optional).
-    Currently only two keys are supported: `modelName` and `device`
+```bash
+kubectl -n cpaas-system delete pod -l service_name=slark-server
+```
 
-    **modelName**: GPU model, example "Tesla P100-PCIE-16GB" or "Tesla T4"(Got it by run `nvidia-smi`).
+## 4. Add prices to the cost model
 
-    **device**: GPU manufacturer, example "nvidia" or "ascend".
+In the platform console, open **Metering and Billing > Cost Models** and edit the cost model linked to the HAMi cluster.
 
-## Cost Details and Cost Statistics
+| Billing item | Method | Unit | Price rule |
+| --- | --- | --- | --- |
+| HAMi Virtual Device | Allocated vMemory | GiB-hours | Default price, with optional `modelName` overrides |
+| HAMi Virtual Device | Project vMemory Quota | GiB-hours | Project-level default price |
 
-Finally, after waiting for 1 or more hours, you can see the cost details in the **Cost Details** with namespace and card uuid dimensions.
-And you can see the total costs based on cluster, project, and namespace in the **Cost Statistics**.
+:::warning
+Project Quota is optional and has no accelerator model dimension. Do not configure `modelName` price overrides for this method.
+:::
+
+For allocation pricing, configure the exact `modelName` value emitted by the HAMi scheduler label source. The value is case-sensitive. The backing physical device UUID must not be used as the virtual-device name because several virtual devices can share one physical card.
+
+## 5. Verify the result
+
+Wait for at least one hourly billing window. Verify the result in this order:
+
+1. **Usage**: confirm an allocation record exists with the expected `virtual_device_id`, namespace, and GiB-hours conversion.
+2. **Bill**: confirm a bill is generated and the expected default or model-specific price is applied.
+3. **Console**: confirm the same item and amount appear in cost details and statistics.
+
+For shared deployment rules, see [Configuration Conventions](./conventions).
