@@ -7,13 +7,17 @@ sourceSHA: a5eb828cb2c78fa71828524f15c995074069156dab594f768fb09206779dc686
 
 This article will introduce how to install the components required for metering and billing.
 
+:::info
+Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Monitoring**. Search for **ACP Basic Monitoring** when you download the plugin from the Customer Portal. A plugin package published before the rename still shows **ACP Monitoring for Prometheus** in the platform after you upload it.
+:::
+
 ## Preinstall Considerations
 
 - The **Cost Management Server** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
 
 - The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
 
-- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) plugin installed. Please ensure that this component is successfully installed in advance.
 
 ## Install the Cost Management Server Plugin
 
@@ -58,7 +62,7 @@ The **Cost Management Server** component relies on ClickHouse as its data storag
 
 ### Prerequisites
 
-- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Monitor with Prometheus** monitoring component installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) plugin installed. Please ensure that this component is successfully installed in advance.
 
 ### Steps
 
