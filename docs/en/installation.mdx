@@ -7,6 +7,15 @@ sourceSHA: a5eb828cb2c78fa71828524f15c995074069156dab594f768fb09206779dc686
 
 This article will introduce how to install the components required for metering and billing.
 
+:::info
+Starting in ACP 4.5, the monitoring plugins that Cost Management depends on are renamed:
+
+- **ACP Monitoring for Prometheus** is named **ACP Basic Monitoring**.
+- **ACP Monitoring for VictoriaMetrics** is named **ACP Advanced Monitoring**.
+
+Search for the new name when you download the plugin from the Customer Portal. A plugin package published before the rename still shows the former name in the platform after you upload it.
+:::
+
 ## Preinstall Considerations
 
 - Download the latest version of the Cost Management Plugin from Custom Portal and upload it to the platform by `violet`.
@@ -17,7 +26,7 @@ This article will introduce how to install the components required for metering 
 
 - The **Cost Management Essentials** needs to integrate with the **Cost Management Server** component.
 
-- The **Cost Management Agent** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
+- The **Cost Management Agent** component requires that the corresponding cluster has a monitoring component installed, either **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) or **ACP Advanced Monitoring** (previously **ACP Monitoring for VictoriaMetrics**). Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 ## Install the Cost Management Server Plugin via Console
 
@@ -228,7 +237,7 @@ This article will introduce how to install the components required for metering 
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
+- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) or **ACP Advanced Monitoring** (previously **ACP Monitoring for VictoriaMetrics**). Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 - The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
 
@@ -248,7 +257,7 @@ This article will introduce how to install the components required for metering 
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Monitor with Prometheus** or **ACP Monitor with VictoriaMetrics**. Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
+- The **Cost Management Agent Plugin** component requires that the corresponding cluster has a monitoring component installed, either **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) or **ACP Advanced Monitoring** (previously **ACP Monitoring for VictoriaMetrics**). Please ensure that one of them is successfully installed in advance. For VictoriaMetrics clusters running an Alauda Container Platform version earlier than 4.4.0, see [Enable Required Metrics for VictoriaMetrics on Versions Earlier Than 4.4.0](#enable-vm-metrics).
 
 - The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
 
@@ -320,7 +329,7 @@ If these metrics are missing, the Cost Management Agent cannot build Pod allocat
 
 ### Prerequisites
 
-- The monitoring component of the metered cluster is **ACP Monitor with VictoriaMetrics**, and the Alauda Container Platform version is earlier than 4.4.0.
+- The monitoring component of the metered cluster is **ACP Advanced Monitoring** (previously **ACP Monitoring for VictoriaMetrics**), and the Alauda Container Platform version is earlier than 4.4.0.
 - You can access the `global` cluster with a user who is allowed to update the `ModuleInfo` resources.
 
 ### Procedure
