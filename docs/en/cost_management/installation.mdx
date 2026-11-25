@@ -8,32 +8,32 @@ sourceSHA: a5eb828cb2c78fa71828524f15c995074069156dab594f768fb09206779dc686
 This article will introduce how to install the components required for metering and billing.
 
 :::info
-Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Monitoring**. Search for **ACP Basic Monitoring** when you download the plugin from the Customer Portal. A plugin package published before the rename still shows **ACP Monitoring for Prometheus** in the platform after you upload it.
+Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Monitoring**. Search for **ACP Basic Monitoring** when you download the Cluster Plugin from the Customer Portal. A Cluster Plugin package published before the rename still shows **ACP Monitoring for Prometheus** in the platform after you upload it.
 :::
 
 ## Preinstall Considerations
 
-- Download the latest version of the Cost Management Plugin from Custom Portal and upload it to the platform by `violet`.
+- Download the latest version of the Cost Management Cluster Plugins from the Customer Portal and upload them to the platform by `violet`.
 
 - The **Cost Management Server**, **Cost Management Essentials** and **Cost Management Agent** work together to provide the overall metering and billing functionality of the platform. The server-side component supports data storage capabilities related to metering and billing, while the client-side component handles data collection and billing capabilities.
 
 - **Cost Management Server** supports deployment in any cluster, but the platform currently only supports deploying one server. Do not deploy multiple servers, as this may cause abnormal issues such as data duplication.
 
-- The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
+- The **Cost Management Server** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse Cluster Plugin provided by the platform or install ClickHouse on your own for integration.
 
 - The **Cost Management Essentials** needs to integrate with the **Cost Management Server** component.
 
-- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) plugin installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) Cluster Plugin installed. Please ensure that this component is successfully installed in advance.
 
-## Install the Cost Management Server Plugin via Console
+## Install the Cost Management Server Cluster Plugin via Console
 
 ### Prerequisites
 
-- The **Cost Management Server Plugin** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
+- The **Cost Management Server Cluster Plugin** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse Cluster Plugin provided by the platform or install ClickHouse on your own for integration.
 
 ### Procedure
 
-1. Log in to the cluster where the ACP Log Storage with Clickhouse plugin is installed and obtain ClickHouse integration information:
+1. Log in to the cluster where the ACP Log Storage with Clickhouse Cluster Plugin is installed and obtain ClickHouse integration information:
 
    ```bash
    # Obtain Clickhouse connection address
@@ -44,11 +44,11 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
    kubectl get secret -n cpaas-system clickhouse-basic-auth -o jsonpath={.data.password}|base64 -d
    ```
 
-2. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
+2. In the left navigation bar, click **Marketplace** > **Cluster Plugins**.
 
-3. Select the cluster which you plan to install the plugin.
+3. Select the cluster on which you plan to install the Cluster Plugin.
 
-4. Find the Cost Management Server plugin and click the Install button in the right actions bar.
+4. Find the Cost Management Server Cluster Plugin and click the Install button in the right actions bar.
 
 5. Refer to the following description to configure the relevant parameters.
 
@@ -61,17 +61,17 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
 
 6. Click **Install**.
 
-## Install the Cost Management Server Plugin via YAML
+## Install the Cost Management Server Cluster Plugin via YAML
 
 ### Prerequisites
 
-- The **Cost Management Server Plugin** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse plugin provided by the platform or install ClickHouse on your own for integration.
+- The **Cost Management Server Cluster Plugin** component relies on ClickHouse as its data storage solution. You can either install the ACP Log Storage with Clickhouse Cluster Plugin provided by the platform or install ClickHouse on your own for integration.
 
 ### Procedure
 
 1. Check available versions
 
-    Ensure the plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
+    Ensure the Cluster Plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
 
     ```shell
     # kubectl get moduleplugin | grep cost-server
@@ -84,7 +84,7 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
 
 2. Create a ModuleInfo
 
-    Create a ModuleInfo resource to install the plugin without any configuration parameters:
+    Create a ModuleInfo resource to install the Cluster Plugin without any configuration parameters:
 
     ```yaml
     kind: ModuleInfo
@@ -110,11 +110,11 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
 
     | Field path | Description |
     | --- | --- |
-    | `metadata.labels.cpaas.io/cluster-name` | Target cluster name where the plugin is installed. |
+    | `metadata.labels.cpaas.io/cluster-name` | Target cluster name where the Cluster Plugin is installed. |
     | `metadata.labels.cpaas.io/module-name` | Must be `cost-server`. |
     | `metadata.labels.cpaas.io/module-type` | Must be `plugin`. |
     | `metadata.name` | ModuleInfo name (e.g., `<cluster>-cost-server`). |
-    | `spec.version` | Plugin version to install. |
+    | `spec.version` | Cluster Plugin version to install. |
     | `spec.config.global.clickhouse.address` | Configure the Clickhouse connection address. |
     | `spec.config.global.clickhouse.authSecret` | Configure the Secret for Clickhouse username and password. |
     | `spec.config.global.clickhouse.cluster` | The cluster name for Clickhouse; the default for platform-created Clickhouse is `replicated.` |
@@ -122,7 +122,7 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
 
 3. Verify installation
 
-    Since the ModuleInfo name changes upon creation, locate the resource via label to check the plugin status and version:
+    Since the ModuleInfo name changes upon creation, locate the resource via label to check the Cluster Plugin status and version:
 
     ```shell
     kubectl get moduleinfo -l cpaas.io/module-name=cost-server
@@ -133,41 +133,41 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
     Field explanations:
 
     * `NAME`: ModuleInfo resource name
-    * `CLUSTER`: Cluster where the plugin is installed
-    * `MODULE`: Plugin name
-    * `DISPLAY_NAME`: Display name of the plugin
+    * `CLUSTER`: Cluster where the Cluster Plugin is installed
+    * `MODULE`: Cluster Plugin name
+    * `DISPLAY_NAME`: Display name of the Cluster Plugin
     * `STATUS`: Installation status; `Running` means successfully installed and running
     * `TARGET_VERSION`: Intended installation version
     * `CURRENT_VERSION`: Version before installation
     * `NEW_VERSION`: Latest available version for installation
 
-## Install the Cost Management Essentials Plugin via Console
+## Install the Cost Management Essentials Cluster Plugin via Console
 
 ### Prerequisites
 
-- The **Cost Management Essentials Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
+- The **Cost Management Essentials Cluster Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server Cluster Plugin** first.
 
 ### Procedure
 
-1. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
+1. In the left navigation bar, click **Marketplace** > **Cluster Plugins**.
 
 2. Select the `global` cluster.
 
-3. Find the Cost Management Server plugin and click the Install button in the right actions bar.
+3. Find the Cost Management Server Cluster Plugin and click the Install button in the right actions bar.
 
 4. Select the cluster name which installed the `Cost Management Server plugin`
 
 5. Click **Install**.
 
-## Install the Cost Management Essentials Plugin via YAML
+## Install the Cost Management Essentials Cluster Plugin via YAML
 
 ### Prerequisites
 
-- The **Cost Management Essentials Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
+- The **Cost Management Essentials Cluster Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server Cluster Plugin** first.
 
 1. Check available versions
 
-    Ensure the plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
+    Ensure the Cluster Plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
 
     ```shell
     # kubectl get moduleplugin | grep cost-api
@@ -180,7 +180,7 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
 
 2. Create a ModuleInfo
 
-    Create a ModuleInfo resource to install the plugin without any configuration parameters:
+    Create a ModuleInfo resource to install the Cluster Plugin without any configuration parameters:
 
     ```yaml
     kind: ModuleInfo
@@ -206,12 +206,12 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
     | `metadata.labels.cpaas.io/module-name` | Must be `cost-api`. |
     | `metadata.labels.cpaas.io/module-type` | Must be `plugin`. |
     | `metadata.name` | ModuleInfo name (e.g., `<cluster>-cost-api`). |
-    | `spec.version` | Plugin version to install. |
+    | `spec.version` | Cluster Plugin version to install. |
     | `spec.config.crossClusterDependency.costServer` | Configure the cluster name which installed the `Cost Management Server plugin` |
 
 3. Verify installation
 
-    Since the ModuleInfo name changes upon creation, locate the resource via label to check the plugin status and version:
+    Since the ModuleInfo name changes upon creation, locate the resource via label to check the Cluster Plugin status and version:
 
     ```shell
     kubectl get moduleinfo -l cpaas.io/module-name=cost-api
@@ -222,47 +222,47 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
     Field explanations:
 
     * `NAME`: ModuleInfo resource name
-    * `CLUSTER`: Cluster where the plugin is installed
-    * `MODULE`: Plugin name
-    * `DISPLAY_NAME`: Display name of the plugin
+    * `CLUSTER`: Cluster where the Cluster Plugin is installed
+    * `MODULE`: Cluster Plugin name
+    * `DISPLAY_NAME`: Display name of the Cluster Plugin
     * `STATUS`: Installation status; `Running` means successfully installed and running
     * `TARGET_VERSION`: Intended installation version
     * `CURRENT_VERSION`: Version before installation
     * `NEW_VERSION`: Latest available version for installation
 
-## Install the Cost Management Agent Plugin via Console
+## Install the Cost Management Agent Cluster Plugin via Console
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) plugin installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent Cluster Plugin** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) Cluster Plugin installed. Please ensure that this component is successfully installed in advance.
 
-- The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
+- The **Cost Management Agent Cluster Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server Cluster Plugin** first.
 
 ### Procedure
 
-1. In the left navigation bar, click **Marketing Place** > **Plugin Management**.
+1. In the left navigation bar, click **Marketplace** > **Cluster Plugins**.
 
-2. Select the cluster where this plugin needs to be installed.
+2. Select the cluster where this Cluster Plugin needs to be installed.
 
-3. Find the Cost Management Agent plugin and click the Install button in the right actions bar.
+3. Find the Cost Management Agent Cluster Plugin and click the Install button in the right actions bar.
 
 4. Select the cluster name which installed the `Cost Management Server plugin`
 
 5. Click **Install**.
 
-## Install the Cost Management Agent Plugin via YAML
+## Install the Cost Management Agent Cluster Plugin via YAML
 
 ### Prerequisites
 
-- The **Cost Management Agent Plugin** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) plugin installed. Please ensure that this component is successfully installed in advance.
+- The **Cost Management Agent Cluster Plugin** component requires that the corresponding cluster has the **ACP Basic Monitoring** (previously **ACP Monitoring for Prometheus**) Cluster Plugin installed. Please ensure that this component is successfully installed in advance.
 
-- The **Cost Management Agent Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server plugin** first.
+- The **Cost Management Agent Cluster Plugin** needs to integrate with the **Cost Management Server** component. So you need to install the **Cost Management Server Cluster Plugin** first.
 
 ### Procedure
 
 1. Check available versions
 
-    Ensure the plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
+    Ensure the Cluster Plugin has been published by checking for ModulePlugin and ModuleConfig resources, in the `global` cluster:
 
     ```shell
     # kubectl get moduleplugin | grep cost-agent
@@ -275,7 +275,7 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
 
 2. Create a ModuleInfo
 
-    Create a ModuleInfo resource to install the plugin without any configuration parameters:
+    Create a ModuleInfo resource to install the Cluster Plugin without any configuration parameters:
 
     ```yaml
     kind: ModuleInfo
@@ -297,16 +297,16 @@ Starting in ACP 4.5, **ACP Monitoring for Prometheus** is named **ACP Basic Moni
 
     | Field path | Description |
     | --- | --- |
-    | `metadata.labels.cpaas.io/cluster-name` | Target cluster name where the plugin is installed. |
+    | `metadata.labels.cpaas.io/cluster-name` | Target cluster name where the Cluster Plugin is installed. |
     | `metadata.labels.cpaas.io/module-name` | Must be `cost-agent`. |
     | `metadata.labels.cpaas.io/module-type` | Must be `plugin`. |
     | `metadata.name` | ModuleInfo name (e.g., `<cluster>-cost-agent`). |
-    | `spec.version` | Plugin version to install. |
+    | `spec.version` | Cluster Plugin version to install. |
     | `spec.config.crossClusterDependency.costServer` | Configure the cluster name which installed the `Cost Management Server plugin` |
 
 3. Verify installation
 
-    Since the ModuleInfo name changes upon creation, locate the resource via label to check the plugin status and version:
+    Since the ModuleInfo name changes upon creation, locate the resource via label to check the Cluster Plugin status and version:
 
     ```shell
     kubectl get moduleinfo -l cpaas.io/module-name=cost-agent
