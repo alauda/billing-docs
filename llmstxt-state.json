@@ -90,11 +90,11 @@
       "updated_at": "2026-05-16T10:39:12Z"
     },
     "docs/en/fuctions/cost_model_management.mdx": {
-      "sha256": "0c19d755eb975656d62a13d0ae46cddad6f7ed73b7fbfde4b430746cbc3305e3",
-      "size": 6906,
+      "sha256": "0deed49bc830a87ee150f17149948ec0ca3f371625ff2f1bfd1000e2908b3185",
+      "size": 6921,
       "description": "End-to-end guide to the Cost Models UI under Metering and Billing > Cost Models: viewing the model list, creating a model with required name, cluster bindings (excluding clusters already bound or lacking the agent), and a price list with default and label-differentiated prices for CPU/Memory/Storage billing methods. Documents Day-1 vs Day-2 behavior (description edits apply immediately; pricing/binding/items take effect next billing cycle), inline editing on the details page, and how to extend supported Prometheus pod labels (`kube_pod_labels`) by editing `moduleinfo.yaml` to add `additionalPodLabels` for kube-prometheus.",
       "generation_method": "ai_agent_reading",
-      "updated_at": "2026-05-16T10:39:12Z"
+      "updated_at": "2026-11-23T19:33:43Z"
     },
     "docs/en/fuctions/details.mdx": {
       "sha256": "6862cc3cef7a77967d4e0d1f5e09909813de1825f780708280e045d0218457ab",
